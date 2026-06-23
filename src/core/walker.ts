@@ -1,4 +1,4 @@
-import { promises as fsp, type Dirent } from "fs";
+import { opendir, realpath, stat, type Dirent } from "./fs-read";
 import * as path from "path";
 import type { WalkEntry, WalkOptions, WalkResult } from "../types";
 
@@ -38,7 +38,7 @@ export async function* walk(opts: WalkOptions): AsyncGenerator<WalkEntry, WalkRe
 	const skip = new Set(opts.skip);
 
 	// Resolve the real root up front (throws ENOENT for a missing root).
-	const realRoot = await fsp.realpath(root);
+	const realRoot = await realpath(root);
 
 	let emitted = 0;
 	const queue: QueuedDir[] = [{ abs: root, real: realRoot, depth: 0 }];
@@ -50,7 +50,7 @@ export async function* walk(opts: WalkOptions): AsyncGenerator<WalkEntry, WalkRe
 
 		let dir;
 		try {
-			dir = await fsp.opendir(current.abs);
+			dir = await opendir(current.abs);
 		} catch {
 			continue; // unreadable directory — skip it
 		}
@@ -74,8 +74,8 @@ export async function* walk(opts: WalkOptions): AsyncGenerator<WalkEntry, WalkRe
 						isFile = true;
 					} else {
 						try {
-							childReal = await fsp.realpath(childAbs);
-							const st = await fsp.stat(childReal);
+							childReal = await realpath(childAbs);
+							const st = await stat(childReal);
 							isDir = st.isDirectory();
 							isFile = st.isFile();
 						} catch {

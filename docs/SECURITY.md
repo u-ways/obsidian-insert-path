@@ -18,10 +18,15 @@ Knowing the plugin's blast radius helps assess risk:
 
 - **Desktop only.** It uses Node's `fs`/`path`/`os` (declared `isDesktopOnly: true`), so it
   never runs on Obsidian mobile.
-- **Reads the local filesystem.** It walks directories under the chosen root and reads the
-  first lines of files to render previews. This is **read-only** — it never writes, moves,
-  or deletes files outside your vault.
-- **Only writes** the path string you select, inserted at your cursor in the active note.
+- **Reads the local filesystem — read-only.** It walks directories under the chosen root
+  and reads the head of files to render previews. All disk access funnels through a single
+  module ([`src/core/fs-read.ts`](../src/core/fs-read.ts)) that exposes **only** read
+  operations (`realpath`, `stat`, `opendir`, `readdir`, and a bounded file-head read). No
+  `node:fs` write, create, delete, or rename API is reachable from the plugin code, and the
+  file reader never hands out a writable file handle — so the plugin **cannot** modify, move,
+  or delete any file on your system.
+- **The only thing it writes** is the path string you select, inserted at your cursor through
+  Obsidian's editor API (`editor.replaceSelection`) — never through the filesystem.
 - **No network, no code execution, no telemetry.** It makes no network requests, runs no
   shell commands or external binaries, and collects/transmits no data.
 
@@ -36,6 +41,10 @@ Knowing the plugin's blast radius helps assess risk:
 - **SBOM published with releases.** When a release is drafted, the SBOM (`sbom.cdx.json`) is
   attached to the draft so each release ships a supply-chain manifest. See
   [RELEASING.md](RELEASING.md).
+- **Enforced read-only filesystem access.** An ESLint `no-restricted-imports` rule forbids
+  importing `node:fs` anywhere under `src/` except the audited read-only facade
+  ([`core/fs-read.ts`](../src/core/fs-read.ts)). The build fails if any module bypasses the
+  facade, so a filesystem **write** path cannot be introduced unnoticed.
 - **Other gates** (see [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)): ESLint —
   including a rule banning raw HTML injection (`innerHTML`/`outerHTML`/`insertAdjacentHTML`) so
   the modal builds DOM only via `createEl`/`createDiv`/`createSpan` — plus type-check, tests,

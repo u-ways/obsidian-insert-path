@@ -1,4 +1,4 @@
-import { promises as fsp, type Dirent } from "fs";
+import { readHead, readdir, type Dirent } from "./fs-read";
 import * as path from "path";
 
 export interface DirPreviewOptions {
@@ -44,9 +44,7 @@ async function appendChildren(
 	maxEntries: number,
 	lines: string[],
 ): Promise<void> {
-	const dirents = (await fsp.readdir(dir, { withFileTypes: true }))
-		.filter((d) => !skip.has(d.name))
-		.sort(compareDirents);
+	const dirents = (await readdir(dir)).filter((d) => !skip.has(d.name)).sort(compareDirents);
 
 	const shown = dirents.slice(0, maxEntries);
 	const overflow = dirents.length - shown.length;
@@ -107,30 +105,22 @@ export async function previewFile(
 	const maxLines = opts.maxLines ?? DEFAULT_MAX_LINES;
 	const maxBytes = opts.maxBytes ?? DEFAULT_MAX_BYTES;
 
-	let handle: Awaited<ReturnType<typeof fsp.open>>;
+	let slice: Buffer;
 	try {
-		handle = await fsp.open(file, "r");
+		slice = await readHead(file, maxBytes);
 	} catch {
 		return { text: "[cannot read file]", truncated: false, binary: false };
 	}
 
-	try {
-		const buf = Buffer.alloc(maxBytes);
-		const { bytesRead } = await handle.read(buf, 0, maxBytes, 0);
-		const slice = buf.subarray(0, bytesRead);
-
-		if (slice.includes(0)) {
-			return { text: "[binary file]", truncated: false, binary: true };
-		}
-
-		let truncated = bytesRead >= maxBytes;
-		let lines = slice.toString("utf8").split("\n");
-		if (lines.length > maxLines) {
-			lines = lines.slice(0, maxLines);
-			truncated = true;
-		}
-		return { text: lines.join("\n"), truncated, binary: false };
-	} finally {
-		await handle.close();
+	if (slice.includes(0)) {
+		return { text: "[binary file]", truncated: false, binary: true };
 	}
+
+	let truncated = slice.length >= maxBytes;
+	let lines = slice.toString("utf8").split("\n");
+	if (lines.length > maxLines) {
+		lines = lines.slice(0, maxLines);
+		truncated = true;
+	}
+	return { text: lines.join("\n"), truncated, binary: false };
 }
