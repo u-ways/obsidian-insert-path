@@ -23,6 +23,8 @@ concurrency:
 
 permissions:
     contents: write
+    id-token: write # mint the Sigstore OIDC token for build-provenance attestation
+    attestations: write # record the provenance attestation for the release assets
 
 jobs:
     publish:
@@ -76,6 +78,17 @@ jobs:
 
             - name: "Build"
               run: npm run build
+
+            - name: "Attest build provenance"
+              # Bind main.js / manifest.json / styles.css to this workflow run and commit
+              # so users can verify provenance with `gh attestation verify <asset>
+              # --repo ${{ github.repository }}`. Keyed by the file digest, not the tag.
+              uses: actions/attest-build-provenance@v4
+              with:
+                  subject-path: |
+                      main.js
+                      manifest.json
+                      styles.css
 
             - name: "Attach release assets"
               env:

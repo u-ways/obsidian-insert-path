@@ -58,6 +58,21 @@ sequenceDiagram
     This sync-back is what avoids version conflicts: `main` never lags behind the tags,
     so the next draft computes cleanly and the community store sees a matching manifest.
 
+## Provenance & verifying release assets
+
+**Publish Release** attests the build provenance of the release binaries with
+[`actions/attest-build-provenance`](https://github.com/actions/attest-build-provenance): it
+records a signed attestation binding `main.js`, `manifest.json`, and `styles.css` to the
+workflow run and commit that produced them. Anyone can verify a downloaded asset came from
+this repository's CI (and was not tampered with) using the GitHub CLI:
+
+```bash
+gh attestation verify main.js --repo u-ways/obsidian-insert-path
+```
+
+The attestation is keyed by the file's SHA-256 digest, so it stays valid regardless of the
+release tag, and it's stored in the repository's attestations rather than as a release asset.
+
 ## Version files
 
 The version lives in **three** files kept in sync by `version-bump.mjs`:
