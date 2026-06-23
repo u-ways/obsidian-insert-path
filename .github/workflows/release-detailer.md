@@ -174,9 +174,13 @@ safe-outputs:
               --notes-file /tmp/release-body.md
             echo "Draft release updated successfully."
 
+# gh-aw's built-in default model is claude-sonnet-4.6, which returns "400 model not
+# supported" when it isn't enabled for the repo's COPILOT_GITHUB_TOKEN. Pin a broadly
+# available model instead; switch to a supported Claude (e.g. claude-sonnet-4) if your
+# Copilot plan offers it.
 engine:
   id: copilot
-  model: claude-sonnet-4.6
+  model: gpt-4o
 ---
 
 # Release Detailer
