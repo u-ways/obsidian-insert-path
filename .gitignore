@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Build output (bundled by esbuild; attached to GitHub releases, not committed)
+main.js
+*.js.map
+
+# Tests
+coverage/
+
+# Local env
+.env
+.env.local
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

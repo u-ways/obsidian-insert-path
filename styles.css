@@ -1,0 +1,116 @@
+/* Insert Path — fzf-style picker modal */
+
+.ip-modal {
+	width: min(1100px, 90vw);
+}
+
+.ip-root-bar {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+	margin-bottom: var(--size-4-2);
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+}
+
+.ip-mode {
+	flex: 0 0 auto;
+	padding: 0 var(--size-2-2);
+	border-radius: var(--radius-s);
+	font-size: var(--font-ui-smaller);
+	font-weight: var(--font-semibold);
+	color: var(--text-on-accent);
+	background-color: var(--interactive-accent);
+}
+
+.ip-mode.is-file {
+	background-color: var(--text-accent);
+}
+
+.ip-root-path {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.ip-search {
+	width: 100%;
+	margin-bottom: var(--size-4-2);
+}
+
+.ip-body {
+	display: flex;
+	gap: var(--size-4-2);
+	height: 60vh;
+	min-height: 0;
+}
+
+.ip-results,
+.ip-preview {
+	flex: 1 1 50%;
+	min-width: 0;
+	overflow: auto;
+	padding: var(--size-4-1);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+}
+
+.ip-row {
+	padding: var(--size-2-1) var(--size-4-1);
+	border-radius: var(--radius-s);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	cursor: pointer;
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-small);
+}
+
+.ip-row:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.ip-row.is-selected {
+	background-color: var(--background-modifier-hover);
+	box-shadow: inset 2px 0 0 0 var(--interactive-accent);
+}
+
+.ip-match {
+	color: var(--text-accent);
+	font-weight: var(--font-semibold);
+}
+
+.ip-empty {
+	padding: var(--size-4-1);
+	color: var(--text-faint);
+}
+
+.ip-preview pre {
+	margin: 0;
+	white-space: pre;
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+}
+
+.ip-footer {
+	margin-top: var(--size-4-2);
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+	text-align: center;
+}
+
+/* Root switcher */
+.ip-root-switcher .ip-root-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-2-1);
+	margin-bottom: var(--size-4-2);
+}
+
+.ip-root-choice {
+	width: 100%;
+	text-align: left;
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-small);
+}

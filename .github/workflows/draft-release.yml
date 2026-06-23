@@ -1,0 +1,72 @@
+name: "Draft Release"
+
+# Recreates a single draft GitHub release on every push to `main`, tagged at the
+# next version with GitHub's native auto-generated notes (categorised by PR label
+# via .github/release.yml). The agentic "Release Detailer" workflow then enriches
+# this draft; a human publishes it, which triggers "Publish Release".
+#
+# Tags are NOT v-prefixed (e.g. `0.1.1`) so they match manifest.json — the Obsidian
+# community store and BRAT expect the release tag to equal the plugin version.
+
+on:
+    push:
+        branches: [main]
+
+concurrency:
+    group: ${{ github.workflow }}
+    cancel-in-progress: false
+
+permissions:
+    contents: write # gh release create / delete / view
+
+jobs:
+    draft-release:
+        name: "GitHub Release"
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        defaults:
+            run:
+                shell: bash
+        steps:
+            - name: "Checkout ${{ github.repository }}"
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0 # need full tag history for version calculation
+
+            - name: "Compute next version"
+              id: version
+              # language=bash
+              run: |
+                  set -euo pipefail
+                  git fetch --tags --force
+                  # Latest released version from non-v semver tags (e.g. 0.3.2).
+                  latest="$(git tag -l '[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -n 1)"
+                  if [[ -z "${latest}" ]]; then
+                    # No releases yet — the first release is whatever package.json declares.
+                    next="$(node -p "require('./package.json').version")"
+                    echo "::notice title=Version source::First release ${next} (from package.json)"
+                  else
+                    IFS='.' read -r major minor patch <<< "${latest}"
+                    next="${major}.${minor}.$((patch + 1))"
+                    echo "::notice title=Version source::Next patch ${next} (from latest tag ${latest})"
+                  fi
+                  echo "version=${next}" | tee -a "${GITHUB_OUTPUT}"
+
+            - name: "Recreate draft release"
+              env:
+                  TAG: ${{ steps.version.outputs.version }}
+                  GH_TOKEN: ${{ github.token }}
+              # language=bash
+              run: |
+                  set -euo pipefail
+                  # Only delete a pre-existing release at this tag if it is still a DRAFT,
+                  # so we never clobber a published release.
+                  if gh release view "${TAG}" --json isDraft --jq '.isDraft' 2>/dev/null | grep -qx 'true'; then
+                    gh release delete "${TAG}" --yes
+                  fi
+                  link="$(gh release create "${TAG}" \
+                    --draft \
+                    --generate-notes \
+                    --title "${TAG}" \
+                    --target "${GITHUB_SHA}")"
+                  echo "::notice title=Draft ${TAG}::${link}"

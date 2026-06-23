@@ -1,0 +1,10 @@
+{
+	"id": "insert-path",
+	"name": "Insert Path",
+	"version": "0.1.0",
+	"minAppVersion": "1.4.0",
+	"description": "Fuzzy-find any file or directory under a root and insert its path at the cursor.",
+	"author": "u-ways",
+	"authorUrl": "https://github.com/u-ways",
+	"isDesktopOnly": true
+}

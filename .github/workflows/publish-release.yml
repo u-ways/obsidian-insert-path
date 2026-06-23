@@ -1,0 +1,105 @@
+name: "Publish Release"
+
+# Runs when a draft release is published. It:
+#   1. syncs the repo version files (package.json -> manifest.json + versions.json
+#      via version-bump.mjs) to the published tag,
+#   2. builds the plugin and attaches main.js / manifest.json / styles.css to the
+#      release (the files Obsidian / BRAT install),
+#   3. commits the synced version back to main (so manifest.json on main always
+#      equals the latest release — required by the community store), and
+#   4. moves the tag onto that commit so the tag tree matches the release.
+#
+# Push-back uses RELEASE_AUTOMATION_TOKEN (a PAT) when present — needed if `main`
+# requires pull requests — otherwise the built-in GITHUB_TOKEN. The bump commit
+# carries [skip ci] so it never re-triggers CI / Draft Release.
+
+on:
+    release:
+        types: [published]
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref_name }}
+    cancel-in-progress: false
+
+permissions:
+    contents: write
+
+jobs:
+    publish:
+        name: "Attach assets & sync version"
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        defaults:
+            run:
+                shell: bash
+        steps:
+            - name: "Checkout main"
+              uses: actions/checkout@v4
+              with:
+                  ref: main
+                  fetch-depth: 0
+                  token: ${{ secrets.RELEASE_AUTOMATION_TOKEN || github.token }}
+
+            - name: "Setup Node"
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: npm
+
+            - run: npm ci
+
+            - name: "Resolve published version"
+              id: ver
+              env:
+                  REF_TAG: ${{ github.ref_name }}
+              # language=bash
+              run: |
+                  set -euo pipefail
+                  version="${REF_TAG#v}"
+                  if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                    echo "::error::Release tag '${REF_TAG}' is not a semver version (X.Y.Z)."
+                    exit 1
+                  fi
+                  echo "tag=${REF_TAG}" | tee -a "${GITHUB_OUTPUT}"
+                  echo "version=${version}" | tee -a "${GITHUB_OUTPUT}"
+
+            - name: "Sync version files to ${{ steps.ver.outputs.version }}"
+              env:
+                  VERSION: ${{ steps.ver.outputs.version }}
+              # language=bash
+              run: |
+                  set -euo pipefail
+                  npm pkg set version="${VERSION}"
+                  # version-bump.mjs reads npm_package_version and rewrites manifest.json + versions.json.
+                  npm_package_version="${VERSION}" node version-bump.mjs
+                  npx prettier --write package.json manifest.json versions.json
+
+            - name: "Build"
+              run: npm run build
+
+            - name: "Attach release assets"
+              env:
+                  TAG: ${{ steps.ver.outputs.tag }}
+                  GH_TOKEN: ${{ github.token }}
+              run: gh release upload "${TAG}" main.js manifest.json styles.css --clobber
+
+            - name: "Commit version sync to main & move tag"
+              env:
+                  TAG: ${{ steps.ver.outputs.tag }}
+                  VERSION: ${{ steps.ver.outputs.version }}
+              # language=bash
+              run: |
+                  set -euo pipefail
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  git add package.json manifest.json versions.json
+                  if git diff --cached --quiet; then
+                    echo "::notice::Version files already in sync — nothing to commit."
+                  else
+                    git commit -m "chore(release): ${VERSION} [skip ci]"
+                    git push origin HEAD:main
+                  fi
+                  # Point the release tag at the (possibly new) main HEAD so the tag tree
+                  # carries the correct manifest.json version.
+                  git tag -f "${TAG}" HEAD
+                  git push -f origin "refs/tags/${TAG}"

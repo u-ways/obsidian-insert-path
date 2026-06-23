@@ -1,0 +1,10 @@
+main.js
+coverage/
+node_modules/
+package-lock.json
+
+# gh-aw agentic workflow: source + generated lock are kept byte-stable so the
+# compiled lock matches `gh aw compile` (prettier would break the staleness hash).
+.github/workflows/*.lock.yml
+.github/workflows/release-detailer.md
+.github/aw/
