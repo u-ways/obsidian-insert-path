@@ -1,6 +1,6 @@
 import { FileSystemAdapter, Modal, Notice } from "obsidian";
 import type { App } from "obsidian";
-import { promises as fsp } from "fs";
+import { stat } from "../core/fs-read";
 import * as os from "os";
 import { walk } from "../core/walker";
 import { Matcher, type MatchResult } from "../core/matcher";
@@ -325,8 +325,8 @@ export class InsertPathModal extends Modal {
 	private async setRoot(root: string): Promise<void> {
 		const trimmed = root.trim();
 		try {
-			const stat = await fsp.stat(trimmed);
-			if (!stat.isDirectory()) throw new Error("not a directory");
+			const info = await stat(trimmed);
+			if (!info.isDirectory()) throw new Error("not a directory");
 		} catch {
 			new Notice(`Insert Path: not a directory: ${trimmed}`);
 			return;
