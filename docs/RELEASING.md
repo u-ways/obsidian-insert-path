@@ -98,11 +98,16 @@ tag. (`versions.json` alone is **not** the version; it's the version→minAppVer
       centralised Copilot billing and the "Allow use of Copilot CLI billed to the organization"
       policy enabled. This repo is under a **user** account, so it uses the PAT above; transfer
       it to such an org to switch.
-- **`RELEASE_AUTOMATION_TOKEN`** (repo secret, optional) — only needed if `main` is
-  protected with _Require a pull request before merging_. The publish job uses it to push
-  the version-sync commit back; otherwise it falls back to the built-in `GITHUB_TOKEN`.
-- **Actions permissions** — the workflows declare `contents: write` per job, so the
-  default token is sufficient for drafting/publishing when `main` allows direct pushes.
+- **`RELEASE_AUTOMATION_TOKEN`** (repo secret) — needed because `main` has **required
+  status checks** (this would also apply to _Require a pull request before merging_) that
+  the built-in `github-actions[bot]` can't bypass on this user-owned repo. The publish job
+  pushes the version-sync commit with this PAT, which is attributed to the admin owner and
+  so bypasses the ruleset via its `RepositoryRole` admin bypass; without it the push falls
+  back to `GITHUB_TOKEN` and the required checks block it. (An org-owned repo could instead
+  bypass for the GitHub Actions app and drop the PAT.)
+- **Actions permissions** — the workflows declare `contents: write` per job, so the default
+  token suffices for drafting and uploading release assets; only the version-sync push-back
+  to `main` needs the PAT above (because of the required checks).
 
 ## Editing the agent
 
