@@ -14,7 +14,7 @@ changelog:
               - "bug"
               - "fix"
 
-        - title: "⬆️ Dependencies"
+        - title: "⬆️ Dependency Updates"
           labels:
               - "dependencies"
 
