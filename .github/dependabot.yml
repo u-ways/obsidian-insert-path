@@ -1,0 +1,36 @@
+# Dependabot version updates. Runs monthly for npm dependencies and GitHub Actions.
+# PRs are labelled `dependencies` so the release notes group them under
+# "⬆️ Dependency Updates" (see .github/release.yml), and the Dependabot auto-merge
+# workflow merges patch/minor updates once required checks pass.
+# https://docs.github.com/en/code-security/tutorials/secure-your-dependencies/dependabot-quickstart
+version: 2
+updates:
+    - package-ecosystem: "npm"
+      directory: "/"
+      schedule:
+          interval: "monthly"
+      labels:
+          - "dependencies"
+      groups:
+          # One batched PR for all minor/patch npm bumps; majors come as individual
+          # PRs so they are reviewed (and not auto-merged) by hand.
+          npm-minor-patch:
+              patterns:
+                  - "*"
+              update-types:
+                  - "minor"
+                  - "patch"
+
+    - package-ecosystem: "github-actions"
+      directory: "/"
+      schedule:
+          interval: "monthly"
+      labels:
+          - "dependencies"
+      groups:
+          actions-minor-patch:
+              patterns:
+                  - "*"
+              update-types:
+                  - "minor"
+                  - "patch"
