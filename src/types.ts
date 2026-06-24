@@ -51,6 +51,11 @@ export interface InsertPathSettings {
 	 * many characters (e.g. minified files), keeping highlighting fast. 0 disables it.
 	 */
 	maxHighlightLineLength: number;
+	/**
+	 * Width of the results pane as a fraction (0–1) of the picker body; the rest goes
+	 * to the preview. Set by dragging the divider between the two panes, and persisted.
+	 */
+	splitRatio: number;
 }
 
 /** How many recent roots to remember. */
@@ -66,7 +71,19 @@ export const DEFAULT_SETTINGS: InsertPathSettings = {
 	maxResults: 10000,
 	maxHighlightBytes: 1024 * 1024,
 	maxHighlightLineLength: 5000,
+	splitRatio: 0.5,
 };
+
+/** Bounds for the results/preview split so neither pane can be collapsed away. */
+export const SPLIT_MIN = 0.2;
+export const SPLIT_MAX = 0.8;
+export const SPLIT_DEFAULT = 0.5;
+
+/** Clamp a results-pane width fraction to a usable range (falling back to the default). */
+export function clampSplitRatio(ratio: number): number {
+	if (!Number.isFinite(ratio)) return SPLIT_DEFAULT;
+	return Math.min(SPLIT_MAX, Math.max(SPLIT_MIN, ratio));
+}
 
 /** Parse the comma-separated `skip` setting into a clean list of basenames. */
 export function parseSkip(skip: string): string[] {

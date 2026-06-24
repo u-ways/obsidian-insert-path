@@ -34,6 +34,9 @@ It brings the muscle memory of shell fuzzy finders into the editor, without leav
 - **Live fuzzy match** with highlighted match positions and a moving selection.
 - **Preview pane**: a 2-level directory tree, or the head of a file with
   syntax highlighting (using Obsidian's own renderer, so it matches your theme).
+- **Resizable split**: drag the divider between the results list and the preview
+  to find your sweet spot; the position is remembered across sessions
+  (double-click the divider to reset it to 50/50).
 - **Root switching** (`Ctrl/Cmd+O`): jump to home, the vault root, a recent root (the last 5 are remembered), or type/paste a custom path.
 - **Configurable insertion**: a template decides what gets inserted.
 
