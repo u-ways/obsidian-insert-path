@@ -30,7 +30,7 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^9",
-		"@types/node": "^22",
+		"@types/node": "^26",
 		"@vitest/coverage-v8": "^4",
 		"esbuild": "^0.28.1",
 		"eslint": "^9",
