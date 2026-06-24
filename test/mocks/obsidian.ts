@@ -49,6 +49,9 @@ export class TAbstractFile {}
 export class TFile extends TAbstractFile {}
 export class TFolder extends TAbstractFile {}
 
+// Platform flags; the UI reads `Platform.isMacOS` to label a shortcut.
+export const Platform = { isMacOS: false };
+
 export function normalizePath(p: string): string {
 	return p;
 }

@@ -1,4 +1,4 @@
-import { FileSystemAdapter, Modal, Notice, TFile, TFolder } from "obsidian";
+import { FileSystemAdapter, Modal, Notice, Platform, TFile, TFolder } from "obsidian";
 import type { App, TAbstractFile } from "obsidian";
 import { shell } from "electron";
 import { stat } from "../core/fs-read";
@@ -114,12 +114,34 @@ export class InsertPathModal extends Modal {
 		this.dividerEl.addEventListener("pointerdown", (e) => this.startDrag(e));
 		this.dividerEl.addEventListener("dblclick", () => void this.setSplit(SPLIT_DEFAULT));
 
-		contentEl.createDiv({
-			cls: "ip-footer",
-			text: "↑↓ move · Enter insert · Alt+Enter open · Tab dir/file · Ctrl+O root · Esc close",
-		});
+		this.buildFooter(contentEl);
 
 		this.updateRootBar();
+	}
+
+	/**
+	 * Build the footer hints: one key + action pair per shortcut, rendered as a
+	 * styled key chip next to its label so the keys stand out from the descriptions.
+	 * The root shortcut follows the platform (Cmd on macOS, Ctrl elsewhere) to match
+	 * the `Mod` binding registered in `registerKeys`.
+	 */
+	private buildFooter(parent: HTMLElement): void {
+		const mod = Platform.isMacOS ? "Cmd" : "Ctrl";
+		const hints: ReadonlyArray<{ keys: readonly string[]; label: string }> = [
+			{ keys: ["↑", "↓"], label: "(Move)" },
+			{ keys: ["Enter"], label: "(Insert)" },
+			{ keys: ["Alt+Enter"], label: "(Open)" },
+			{ keys: ["Tab"], label: "(Dir / File)" },
+			{ keys: [`${mod}+O`], label: "(Change root)" },
+			{ keys: ["Esc"], label: "(Close)" },
+		];
+
+		const footer = parent.createDiv({ cls: "ip-footer" });
+		for (const hint of hints) {
+			const item = footer.createSpan({ cls: "ip-hint" });
+			for (const key of hint.keys) item.createEl("kbd", { cls: "ip-key", text: key });
+			item.createSpan({ cls: "ip-hint-label", text: hint.label });
+		}
 	}
 
 	/** Apply a results-pane width fraction to the layout (preview takes the rest). */
