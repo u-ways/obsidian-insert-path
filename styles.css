@@ -1,7 +1,8 @@
 /* Insert Path — fzf-style picker modal */
 
 .ip-modal {
-	width: min(1100px, 90vw);
+	/* +30% wider than the original 1100px (capped at 90vw on small screens). */
+	width: min(1430px, 90vw);
 }
 
 .ip-root-bar {
@@ -41,7 +42,8 @@
 .ip-body {
 	display: flex;
 	gap: var(--size-4-2);
-	height: 60vh;
+	/* +30% taller than the original 60vh. */
+	height: 78vh;
 	min-height: 0;
 }
 
