@@ -27,6 +27,16 @@ updates:
           interval: "monthly"
       labels:
           - "dependencies"
+      ignore:
+          # These actions appear ONLY in the gh-aw-generated release-detailer.lock.yml,
+          # which `gh aw compile` SHA-pins and regenerates. Bumping them via Dependabot
+          # would just desync the generated lock (and the minor ones would auto-merge),
+          # so ignore them. Actions used by the hand-written workflows (checkout,
+          # setup-node, upload-artifact, …) are still updated normally.
+          - dependency-name: "github/gh-aw-actions"
+          - dependency-name: "actions/cache"
+          - dependency-name: "actions/download-artifact"
+          - dependency-name: "actions/github-script"
       groups:
           actions-minor-patch:
               patterns:
