@@ -335,7 +335,10 @@ export class InsertPathModal extends Modal {
 		const token = ++this.previewToken;
 
 		if (this.mode === "dir") {
-			const text = await previewDir(abs, { skip: parseSkip(this.plugin.settings.skip) });
+			const text = await previewDir(abs, {
+				skip: parseSkip(this.plugin.settings.skip),
+				maxDepth: this.plugin.settings.treeDepth,
+			});
 			if (token !== this.previewToken) return; // a newer selection won
 			this.previewEl.empty();
 			this.previewEl.createEl("pre", { cls: "ip-tree", text }); // the ascii tree stays plain

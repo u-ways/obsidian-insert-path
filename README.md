@@ -32,8 +32,9 @@ It brings the muscle memory of shell fuzzy finders into the editor, without leav
 
 - **Two commands**: _Insert directory path_ and _Insert file path_. (+ a `Tab` toggle to switch mode inside the picker)
 - **Live fuzzy match** with highlighted match positions and a moving selection.
-- **Preview pane**: a 2-level directory tree, or the head of a file with
-  syntax highlighting (using Obsidian's own renderer, so it matches your theme).
+- **Preview pane**: a directory tree (depth configurable, default 2), or the head
+  of a file with syntax highlighting (using Obsidian's own renderer, so it matches
+  your theme).
 - **Resizable split**: drag the divider between the results list and the preview
   to find your sweet spot; the position is remembered across sessions
   (double-click the divider to reset it to 50/50).
@@ -64,16 +65,17 @@ Walking and previews use Node's `fs`; fuzzy matching uses [fzf-for-js](https://g
 
 ## Settings
 
-| Setting            | Default                      | Notes                                                                            |
-| ------------------ | ---------------------------- | -------------------------------------------------------------------------------- |
-| Default root       | your home folder             | Where the picker starts.                                                         |
-| Insertion template | `{path}`                     | Tokens: `{path}` (absolute), `{name}` (basename), `{rel}` (relative).            |
-| Skip directories   | `.git, node_modules, .cache` | Comma-separated directory names pruned while walking.                            |
-| Follow symlinks    | on                           | Symlink cycles are handled safely.                                               |
-| Include hidden     | on                           | Include dot-files and dot-directories.                                           |
-| Max results        | `10000`                      | A notice appears if the walk is truncated.                                       |
-| Highlight size cap | `1024` KB                    | Files larger than this preview as plain text. `0` disables the limit.            |
-| Highlight line cap | `5000` chars                 | Skip highlighting when a line is longer than this (e.g. minified). `0` disables. |
+| Setting              | Default                      | Notes                                                                            |
+| -------------------- | ---------------------------- | -------------------------------------------------------------------------------- |
+| Default root         | your home folder             | Where the picker starts.                                                         |
+| Insertion template   | `{path}`                     | Tokens: `{path}` (absolute), `{name}` (basename), `{rel}` (relative).            |
+| Skip directories     | `.git, node_modules, .cache` | Comma-separated directory names pruned while walking.                            |
+| Directory tree depth | `2`                          | How many levels deep the directory preview tree descends.                        |
+| Follow symlinks      | on                           | Symlink cycles are handled safely.                                               |
+| Include hidden       | on                           | Include dot-files and dot-directories.                                           |
+| Max results          | `10000`                      | A notice appears if the walk is truncated.                                       |
+| Highlight size cap   | `1024` KB                    | Files larger than this preview as plain text. `0` disables the limit.            |
+| Highlight line cap   | `5000` chars                 | Skip highlighting when a line is longer than this (e.g. minified). `0` disables. |
 
 **Insertion template examples**
 
