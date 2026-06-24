@@ -97,9 +97,10 @@ to honour Obsidian's DOM guidelines — build nodes with `createEl`/`createDiv`/
 
 ## Releasing
 
-Releases are automated: merging to `main` recreates a draft release, an agentic
-"Release Detailer" workflow enriches it, and publishing it attaches the build assets
-and syncs the version back to `main`. You don't bump versions by hand. See
+Releases are automated: merging to `main` recreates a draft release, the "Release
+Detailer" and "Release Versioner" workflows (Claude, via `anthropics/claude-code-action`)
+enrich it and set its SemVer tag, and publishing it attaches the build assets and syncs
+the version back to `main`. You don't bump versions by hand. See
 [docs/RELEASING.md](RELEASING.md) for the full lifecycle, required secrets
-(`COPILOT_GITHUB_TOKEN`, optionally `RELEASE_AUTOMATION_TOKEN`), and how to edit the
-agentic workflow (`gh aw compile`).
+(`CLAUDE_CODE_OAUTH_TOKEN`, optionally `RELEASE_AUTOMATION_TOKEN`), and how to edit the
+workflow prompts.
