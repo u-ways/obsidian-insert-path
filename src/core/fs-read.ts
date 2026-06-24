@@ -31,16 +31,27 @@ export function readdir(p: string): Promise<Dirent[]> {
 	return fsp.readdir(p, { withFileTypes: true });
 }
 
+/** The head of a file: the first bytes read, plus the file's total size. */
+export interface FileHead {
+	/** The first up-to-`maxBytes` bytes of the file. */
+	bytes: Buffer;
+	/** The file's total size in bytes (from fstat on the open handle). */
+	size: number;
+}
+
 /**
- * Read up to `maxBytes` from the start of a file. The file is opened read-only, read
- * once, and closed here — the writable FileHandle never escapes this function.
+ * Read up to `maxBytes` from the start of a file, and report its total size. The
+ * file is opened read-only, stat'd and read once on the same handle (so the size
+ * costs no extra syscall), and closed here — the writable FileHandle never escapes
+ * this function.
  */
-export async function readHead(file: string, maxBytes: number): Promise<Buffer> {
+export async function readHead(file: string, maxBytes: number): Promise<FileHead> {
 	const handle = await fsp.open(file, "r");
 	try {
+		const { size } = await handle.stat();
 		const buf = Buffer.alloc(maxBytes);
 		const { bytesRead } = await handle.read(buf, 0, maxBytes, 0);
-		return buf.subarray(0, bytesRead);
+		return { bytes: buf.subarray(0, bytesRead), size };
 	} finally {
 		await handle.close();
 	}

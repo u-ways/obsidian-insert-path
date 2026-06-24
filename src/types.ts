@@ -44,6 +44,13 @@ export interface InsertPathSettings {
 	includeHidden: boolean;
 	/** Cap on walked entries before truncation (guards against huge trees). */
 	maxResults: number;
+	/** Max on-disk file size to syntax-highlight, in bytes. 0 disables the size limit. */
+	maxHighlightBytes: number;
+	/**
+	 * Skip syntax-highlighting when the preview head contains a line longer than this
+	 * many characters (e.g. minified files), keeping highlighting fast. 0 disables it.
+	 */
+	maxHighlightLineLength: number;
 }
 
 /** How many recent roots to remember. */
@@ -57,6 +64,8 @@ export const DEFAULT_SETTINGS: InsertPathSettings = {
 	followSymlinks: true,
 	includeHidden: true,
 	maxResults: 10000,
+	maxHighlightBytes: 1024 * 1024,
+	maxHighlightLineLength: 5000,
 };
 
 /** Parse the comma-separated `skip` setting into a clean list of basenames. */

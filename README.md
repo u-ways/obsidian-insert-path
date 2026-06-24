@@ -32,7 +32,8 @@ It brings the muscle memory of shell fuzzy finders into the editor, without leav
 
 - **Two commands**: _Insert directory path_ and _Insert file path_. (+ a `Tab` toggle to switch mode inside the picker)
 - **Live fuzzy match** with highlighted match positions and a moving selection.
-- **Preview pane**: a 2-level directory tree, or the head of a file.
+- **Preview pane**: a 2-level directory tree, or the head of a file with
+  syntax highlighting (using Obsidian's own renderer, so it matches your theme).
 - **Root switching** (`Ctrl/Cmd+O`): jump to home, the vault root, a recent root (the last 5 are remembered), or type/paste a custom path.
 - **Configurable insertion**: a template decides what gets inserted.
 
@@ -60,14 +61,16 @@ Walking and previews use Node's `fs`; fuzzy matching uses [fzf-for-js](https://g
 
 ## Settings
 
-| Setting            | Default                      | Notes                                                                 |
-| ------------------ | ---------------------------- | --------------------------------------------------------------------- |
-| Default root       | your home folder             | Where the picker starts.                                              |
-| Insertion template | `{path}`                     | Tokens: `{path}` (absolute), `{name}` (basename), `{rel}` (relative). |
-| Skip directories   | `.git, node_modules, .cache` | Comma-separated directory names pruned while walking.                 |
-| Follow symlinks    | on                           | Symlink cycles are handled safely.                                    |
-| Include hidden     | on                           | Include dot-files and dot-directories.                                |
-| Max results        | `10000`                      | A notice appears if the walk is truncated.                            |
+| Setting            | Default                      | Notes                                                                            |
+| ------------------ | ---------------------------- | -------------------------------------------------------------------------------- |
+| Default root       | your home folder             | Where the picker starts.                                                         |
+| Insertion template | `{path}`                     | Tokens: `{path}` (absolute), `{name}` (basename), `{rel}` (relative).            |
+| Skip directories   | `.git, node_modules, .cache` | Comma-separated directory names pruned while walking.                            |
+| Follow symlinks    | on                           | Symlink cycles are handled safely.                                               |
+| Include hidden     | on                           | Include dot-files and dot-directories.                                           |
+| Max results        | `10000`                      | A notice appears if the walk is truncated.                                       |
+| Highlight size cap | `1024` KB                    | Files larger than this preview as plain text. `0` disables the limit.            |
+| Highlight line cap | `5000` chars                 | Skip highlighting when a line is longer than this (e.g. minified). `0` disables. |
 
 **Insertion template examples**
 
@@ -84,7 +87,9 @@ So if you want to insert a Markdown link to the selected file, you can use `[{na
 ## Limitations
 
 - Desktop only (Obsidian ≥ 1.4.0).
-- The file preview is plain monospace text (no syntax highlighting).
+- File previews are syntax-highlighted via Obsidian's own renderer (your active
+  theme's colors). Files with no recognized extension, binaries, and files over
+  the configurable size/line caps fall back to plain monospace text.
 - The commands require an active editor — they insert at the cursor.
 - Tested with Ubuntu & macOS only.
 

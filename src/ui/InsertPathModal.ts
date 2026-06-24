@@ -5,6 +5,7 @@ import * as os from "os";
 import { walk } from "../core/walker";
 import { Matcher, type MatchResult } from "../core/matcher";
 import { previewDir, previewFile } from "../core/preview";
+import { getPrism, prismLangFor, shouldHighlight } from "../core/prism";
 import { addRecentRoot } from "../core/recent";
 import { parseSkip, type WalkMode } from "../types";
 import type InsertPathPlugin from "../main";
@@ -69,6 +70,8 @@ export class InsertPathModal extends Modal {
 		this.buildDom();
 		this.registerKeys();
 		this.searchEl.focus();
+		// Warm Obsidian's Prism now so the first file preview isn't briefly unhighlighted.
+		void getPrism();
 		void this.startWalk();
 	}
 
@@ -275,16 +278,46 @@ export class InsertPathModal extends Modal {
 		if (abs === undefined) return;
 
 		const token = ++this.previewToken;
-		let text: string;
+
 		if (this.mode === "dir") {
-			text = await previewDir(abs, { skip: parseSkip(this.plugin.settings.skip) });
-		} else {
-			const file = await previewFile(abs);
-			text = file.truncated ? `${file.text}\n…` : file.text;
+			const text = await previewDir(abs, { skip: parseSkip(this.plugin.settings.skip) });
+			if (token !== this.previewToken) return; // a newer selection won
+			this.previewEl.empty();
+			this.previewEl.createEl("pre", { cls: "ip-tree", text }); // the ascii tree stays plain
+			return;
 		}
+
+		const file = await previewFile(abs);
 		if (token !== this.previewToken) return; // a newer selection won
+
 		this.previewEl.empty();
-		this.previewEl.createEl("pre", { text });
+		const pre = this.previewEl.createEl("pre");
+		const code = pre.createEl("code");
+		code.setText(file.text); // textContent only — file content is never parsed as markup
+		// The truncation marker is its own node so Prism never tokenizes/recolors it.
+		if (file.truncated) pre.createEl("span", { cls: "ip-truncated", text: "\n…" });
+
+		// shouldHighlight() rejects binary/unreadable previews BEFORE we derive a
+		// language or touch Prism — the boundary that keeps binary content out of the
+		// tokenizer — and also enforces the user's size / long-line guards.
+		const limits = {
+			maxHighlightBytes: this.plugin.settings.maxHighlightBytes,
+			maxHighlightLineLength: this.plugin.settings.maxHighlightLineLength,
+		};
+		if (!shouldHighlight(file, limits)) return;
+		const lang = prismLangFor(abs); // from the filename only, never file content
+		if (!lang) return;
+
+		const prism = await getPrism();
+		if (token !== this.previewToken) return; // a newer selection may have won during the await
+		if (prism?.languages?.[lang]) {
+			code.addClass(`language-${lang}`);
+			try {
+				prism.highlightElement(code);
+			} catch {
+				// Leave the plain text already in the DOM — byte-for-byte the old behavior.
+			}
+		}
 	}
 
 	private choose(): false {

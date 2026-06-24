@@ -21,6 +21,10 @@ export interface FilePreview {
 	truncated: boolean;
 	/** True if the head looked binary (contained a NUL byte). */
 	binary: boolean;
+	/** True if the file could not be read (text is a placeholder). */
+	error: boolean;
+	/** The file's total size in bytes (0 when unreadable). */
+	size: number;
 }
 
 const DEFAULT_MAX_ENTRIES = 50;
@@ -97,6 +101,11 @@ export async function previewDir(dir: string, opts: DirPreviewOptions = {}): Pro
  * Read the head of `file` for preview (like `bat --line-range=:200`).
  * Reads at most `maxBytes`, detects binary content (NUL byte), caps at `maxLines`,
  * and returns a placeholder instead of throwing when the file can't be read.
+ *
+ * The byte/line caps below are load-bearing for more than memory: the preview is
+ * syntax-highlighted synchronously on the main thread, so bounding the head also
+ * bounds worst-case tokenization cost (including any Prism ReDoS tail-risk). Do
+ * not raise them without re-evaluating that.
  */
 export async function previewFile(
 	file: string,
@@ -105,15 +114,24 @@ export async function previewFile(
 	const maxLines = opts.maxLines ?? DEFAULT_MAX_LINES;
 	const maxBytes = opts.maxBytes ?? DEFAULT_MAX_BYTES;
 
-	let slice: Buffer;
+	let head: { bytes: Buffer; size: number };
 	try {
-		slice = await readHead(file, maxBytes);
+		head = await readHead(file, maxBytes);
 	} catch {
-		return { text: "[cannot read file]", truncated: false, binary: false };
+		return {
+			text: "[cannot read file]",
+			truncated: false,
+			binary: false,
+			error: true,
+			size: 0,
+		};
 	}
 
+	const slice = head.bytes;
+	const size = head.size;
+
 	if (slice.includes(0)) {
-		return { text: "[binary file]", truncated: false, binary: true };
+		return { text: "[binary file]", truncated: false, binary: true, error: false, size };
 	}
 
 	let truncated = slice.length >= maxBytes;
@@ -122,5 +140,5 @@ export async function previewFile(
 		lines = lines.slice(0, maxLines);
 		truncated = true;
 	}
-	return { text: lines.join("\n"), truncated, binary: false };
+	return { text: lines.join("\n"), truncated, binary: false, error: false, size };
 }
