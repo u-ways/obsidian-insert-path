@@ -82,5 +82,39 @@ export class InsertPathSettingTab extends PluginSettingTab {
 					}
 				}),
 			);
+
+		new Setting(containerEl)
+			.setName("Max file size for syntax highlighting (kilobytes)")
+			.setDesc(
+				"Larger files preview as plain text without highlighting. Set to zero to always highlight. The preview reads at most the first 64 kilobytes or 200 lines regardless.",
+			)
+			.addText((text) =>
+				text
+					.setValue(String(Math.round(this.plugin.settings.maxHighlightBytes / 1024)))
+					.onChange(async (value) => {
+						const kb = Number.parseInt(value, 10);
+						if (Number.isFinite(kb) && kb >= 0) {
+							this.plugin.settings.maxHighlightBytes = kb * 1024;
+							await this.plugin.saveSettings();
+						}
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Max line length for syntax highlighting")
+			.setDesc(
+				"Skip highlighting when the preview contains a line longer than this many characters, such as in minified files. This keeps highlighting fast. Set to zero to disable the guard.",
+			)
+			.addText((text) =>
+				text
+					.setValue(String(this.plugin.settings.maxHighlightLineLength))
+					.onChange(async (value) => {
+						const n = Number.parseInt(value, 10);
+						if (Number.isFinite(n) && n >= 0) {
+							this.plugin.settings.maxHighlightLineLength = n;
+							await this.plugin.saveSettings();
+						}
+					}),
+			);
 	}
 }

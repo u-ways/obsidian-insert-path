@@ -46,3 +46,9 @@ export class FileSystemAdapter {
 export function normalizePath(p: string): string {
 	return p;
 }
+
+// The real `loadPrism` resolves to Obsidian's bundled Prism; under tests there is
+// no Prism, so resolve to null — callers fall back to plain text.
+export function loadPrism(): Promise<unknown> {
+	return Promise.resolve(null);
+}

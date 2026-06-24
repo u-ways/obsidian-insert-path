@@ -90,7 +90,19 @@
 	white-space: pre;
 	font-family: var(--font-monospace);
 	font-size: var(--font-ui-smaller);
+}
+
+/* Plain (un-highlighted) previews stay muted: the directory tree (a bare-text
+   <pre class="ip-tree">) and any <code> without a Prism `language-` class
+   (binary / unreadable / size-capped / unknown language). Highlighted code is
+   left untouched so the user's theme `.token.*` colors win. */
+.ip-preview pre.ip-tree,
+.ip-preview pre > code:not([class*="language-"]) {
 	color: var(--text-muted);
+}
+
+.ip-truncated {
+	color: var(--text-faint);
 }
 
 .ip-footer {
