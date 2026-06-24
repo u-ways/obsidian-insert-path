@@ -11,6 +11,13 @@ updates:
           interval: "monthly"
       labels:
           - "dependencies"
+      ignore:
+          # @eslint/js is held at v9 because eslint-plugin-obsidianmd@0.3.x peer-requires
+          # @eslint/js ^9.30.1 (eslint itself is on v10). Re-allow the major once that
+          # plugin supports @eslint/js v10.
+          - dependency-name: "@eslint/js"
+            update-types:
+                - "version-update:semver-major"
       groups:
           # One batched PR for all minor/patch npm bumps; majors come as individual
           # PRs so they are reviewed (and not auto-merged) by hand.
