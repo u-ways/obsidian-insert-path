@@ -22,7 +22,7 @@ sequenceDiagram
     Draft-->>Agent: workflow_run completed
     Agent->>Rel: add user-facing Details from PRs + diff
     Agent-->>Ver: workflow_run completed
-    Ver->>Rel: classify PRs/diff (patch/minor/major); re-tag draft to correct SemVer
+    Ver->>Rel: classify PRs/diff (patch/minor/major) > re-tag draft to correct SemVer
     Dev->>Rel: review draft (tag already corrected)
     Dev->>Rel: Publish
     Rel->>Pub: release published
