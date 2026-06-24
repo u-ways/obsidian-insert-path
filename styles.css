@@ -148,6 +148,43 @@
 	color: var(--text-faint);
 }
 
+/* Rainbow directory tree (the "Colorize directory tree" setting). Each nesting
+   depth cycles one of the theme's named palette colours, so the tree adapts to
+   the active theme. These per-span colours override the muted .ip-tree colour
+   above; directories are bold and non-entry rows (overflow / unreadable) stay faint. */
+.ip-tree-d0 {
+	color: var(--color-red);
+}
+.ip-tree-d1 {
+	color: var(--color-orange);
+}
+.ip-tree-d2 {
+	color: var(--color-yellow);
+}
+.ip-tree-d3 {
+	color: var(--color-green);
+}
+.ip-tree-d4 {
+	color: var(--color-cyan);
+}
+.ip-tree-d5 {
+	color: var(--color-blue);
+}
+.ip-tree-d6 {
+	color: var(--color-purple);
+}
+.ip-tree-d7 {
+	color: var(--color-pink);
+}
+
+.ip-tree-line.is-dir {
+	font-weight: var(--font-semibold);
+}
+
+.ip-tree-muted {
+	color: var(--text-faint);
+}
+
 .ip-footer {
 	margin-top: var(--size-4-2);
 	/* +30% over the theme's smaller UI size so the key hints read more easily. */

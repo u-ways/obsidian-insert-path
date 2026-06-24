@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { promises as fsp } from "fs";
 import * as os from "os";
 import * as path from "path";
-import { previewDir, previewFile } from "../../src/core/preview";
+import { buildDirTree, previewDir, previewFile } from "../../src/core/preview";
 
 let tmp: string;
 
@@ -85,6 +85,45 @@ describe("previewDir", () => {
 	it("returns a placeholder for a missing directory", async () => {
 		const tree = await previewDir(path.join(tmp, "does-not-exist"));
 		expect(tree).toBe("[cannot read directory]");
+	});
+});
+
+describe("buildDirTree", () => {
+	const find = (lines: Awaited<ReturnType<typeof buildDirTree>>, needle: string) =>
+		lines.find((l) => l.text.includes(needle));
+
+	it("tags each row with its nesting depth and dir/file kind", async () => {
+		await write("project/alpha/a1.txt");
+		await write("project/zeta.txt");
+
+		const lines = await buildDirTree(path.join(tmp, "project"));
+
+		expect(find(lines, "project/")).toMatchObject({ depth: 0, isDir: true, muted: false });
+		expect(find(lines, "alpha/")).toMatchObject({ depth: 1, isDir: true, muted: false });
+		expect(find(lines, "a1.txt")).toMatchObject({ depth: 2, isDir: false, muted: false });
+		expect(find(lines, "zeta.txt")).toMatchObject({ depth: 1, isDir: false, muted: false });
+	});
+
+	it("joins to exactly the previewDir text", async () => {
+		await write("project/alpha/a1.txt");
+		await write("project/zeta.txt");
+
+		const dir = path.join(tmp, "project");
+		const joined = (await buildDirTree(dir)).map((l) => l.text).join("\n");
+		expect(joined).toBe(await previewDir(dir));
+	});
+
+	it("marks an overflow row as muted", async () => {
+		for (let i = 0; i < 6; i++) await write(`p/f${i}.txt`);
+		const lines = await buildDirTree(path.join(tmp, "p"), { maxEntries: 3 });
+		expect(find(lines, "more)")).toMatchObject({ muted: true });
+	});
+
+	it("returns a single muted placeholder for a missing directory", async () => {
+		const lines = await buildDirTree(path.join(tmp, "does-not-exist"));
+		expect(lines).toEqual([
+			{ depth: 0, text: "[cannot read directory]", isDir: false, muted: true },
+		]);
 	});
 });
 
