@@ -1,0 +1,162 @@
+name: Release Versioner
+
+# Decides the SemVer level (patch / minor / major) for the freshly drafted release and
+# re-tags the DRAFT so that publishing it yields the correct version. "Draft Release"
+# always tags the next PATCH, so features/breaking changes would otherwise be mis-versioned
+# (e.g. 0.1.3 shipped features but should have been 0.2.0). Runs after "Release Detailer".
+#
+# Two steps on purpose: Claude (anthropics/claude-code-action, on this repo's Claude
+# subscription) only READS and writes the bump decision to a file — it does no version
+# arithmetic and has no release-mutating tools. A trusted shell step then computes the
+# target version deterministically and re-tags, only ever a DRAFT.
+
+on:
+    workflow_run:
+        workflows: ["Release Detailer"]
+        types: [completed]
+        branches: [main]
+    workflow_dispatch:
+        inputs:
+            tag:
+                description: "Draft release tag to re-version (blank = latest draft)."
+                required: false
+            dry_run:
+                description: "If true, only report the decision; do not edit the draft."
+                required: false
+                default: false
+                type: boolean
+
+permissions:
+    contents: write # view + re-tag the draft release
+    pull-requests: read # read the merged PRs in the release range
+
+concurrency:
+    group: release-versioner
+    cancel-in-progress: false
+
+jobs:
+    version:
+        name: Set the draft's SemVer tag
+        # Skip when the upstream run failed/was cancelled (manual dispatch always runs).
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        env:
+            GH_TOKEN: ${{ github.token }}
+            INPUT_TAG: ${{ inputs.tag }}
+            DRY_RUN: ${{ inputs.dry_run }}
+        steps:
+            - uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0 # full history + tags for the PR/diff range
+
+            # Step 1 — Claude classifies the bump to a file. Read-only tools + Write: it
+            # does NO version maths and cannot publish, delete, create or re-tag a release.
+            - uses: anthropics/claude-code-action@74eedf1a1892082d619c3edb66b9402da6520e7f # v1.0.156
+              with:
+                  claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+                  claude_args: |
+                      --allowedTools "Bash(gh release view:*),Bash(gh release list:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh pr diff:*),Bash(git log:*),Bash(git diff:*),Bash(git show:*),Bash(git tag:*),Read,Grep,Glob,Write"
+                      --max-turns 25
+                  prompt: |
+                      You classify the SemVer level of the drafted release of ${{ github.repository }} (an Obsidian
+                      plugin). You do NOT compute version numbers or edit anything — only write your decision to a file;
+                      a trusted step does the version maths and the re-tag.
+
+                      Pick the target draft: the tag "${{ inputs.tag }}" if that is non-empty, otherwise the most recent draft:
+                      gh release list --json tagName,isDraft,createdAt --jq 'map(select(.isDraft))|sort_by(.createdAt)|reverse|.[0].tagName'.
+                      If there is no draft, write nothing and stop.
+
+                      Determine the changes in the release range: the body's "## What's Changed" plus the PRs/diff (the
+                      "**Full Changelog**" compare link gives <base>...<head>, else the latest published tag is the base).
+                      Use gh pr view / gh pr list and git log/diff.
+
+                      Classify the single HIGHEST-impact change:
+                      - major = a backwards-INCOMPATIBLE change: removed/renamed command, hotkey or setting; a changed
+                        default that breaks existing users; a raised minAppVersion dropping supported Obsidian versions; a
+                        settings/data format change needing migration; a removed capability.
+                      - minor = a new backwards-compatible feature, command, setting, option or user-visible capability.
+                      - patch = bug fixes, performance, refactors, docs, tests, CI/build, dependency bumps.
+                      Highest wins (one breaking change ⇒ major even amid fixes). Only choose major with concrete evidence
+                      of a breaking change — do NOT infer it from a version number or title. When genuinely unsure between
+                      two levels, pick the lower one (the maintainer reviews the draft before publishing).
+
+                      Write EXACTLY one word — patch, minor, or major (and nothing else) — to "${{ github.workspace }}/.bump.txt",
+                      and a one-sentence justification to "${{ github.workspace }}/.reason.txt". Do not run gh release edit / create / delete.
+
+            # Step 2 — trusted, deterministic: compute the target version and re-tag the DRAFT.
+            - name: Re-tag the draft to the correct SemVer version
+              run: |
+                  set -euo pipefail
+                  if [ ! -s .bump.txt ]; then
+                    echo "No bump decision — nothing to do."
+                    exit 0
+                  fi
+                  bump="$(tr -d '[:space:]' < .bump.txt)"
+                  case "$bump" in
+                    patch | minor | major) ;;
+                    *) echo "::error::Invalid bump '$bump' (expected patch|minor|major)."; exit 1 ;;
+                  esac
+                  reason="$(tr '\n' ' ' < .reason.txt 2>/dev/null | head -c 500 || true)"
+
+                  # Resolve which DRAFT to re-version: explicit dispatch tag, else the latest draft.
+                  current="${INPUT_TAG:-}"
+                  [ -n "$current" ] || current="$(gh release list --limit 30 --json tagName,isDraft,createdAt \
+                    --jq 'map(select(.isDraft))|sort_by(.createdAt)|reverse|.[0].tagName // ""')"
+                  if [ -z "$current" ]; then echo "No draft release — nothing to do."; exit 0; fi
+                  if ! [[ "$current" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                    echo "::error::Draft tag '$current' is not X.Y.Z semver — refusing."; exit 1
+                  fi
+                  is_draft="$(gh release view "$current" --json isDraft --jq .isDraft 2>/dev/null || echo "")"
+                  if [ "$is_draft" != "true" ]; then
+                    echo "::error::Release '$current' is not a draft (isDraft='$is_draft') — refusing to edit."; exit 1
+                  fi
+
+                  # base = latest PUBLISHED semver release (drafts excluded), highest by version.
+                  base="$(gh release list --limit 100 --json tagName,isDraft \
+                    --jq '.[] | select(.isDraft | not) | .tagName' \
+                    | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)"
+                  if [ -z "$base" ]; then echo "No published release — leaving draft '$current' unchanged."; exit 0; fi
+
+                  # Map bump -> target. 10# forces base-10 so a component like 08/09 can't trip octal parsing.
+                  # Pre-1.0 note: a major while still 0.y.z jumps to 1.0.0; to keep breaking changes inside 0.x,
+                  # change the major) arm to:  target="${major}.$((10#${minor} + 1)).0"
+                  IFS='.' read -r major minor patch <<< "$base"
+                  case "$bump" in
+                    major) target="$((10#${major} + 1)).0.0" ;;
+                    minor) target="${major}.$((10#${minor} + 1)).0" ;;
+                    patch) target="${major}.${minor}.$((10#${patch} + 1))" ;;
+                  esac
+
+                  {
+                    echo "### 🔖 Release Versioner"
+                    echo ""
+                    echo "| Latest published | Current draft | Decision | Target |"
+                    echo "| --- | --- | --- | --- |"
+                    echo "| \`$base\` | \`$current\` | \`$bump\` | \`$target\` |"
+                    echo ""
+                    echo "**Reason:** $reason"
+                  } >> "$GITHUB_STEP_SUMMARY"
+                  echo "::notice::published=$base bump=$bump -> target=$target (draft $current)"
+
+                  if [ "$target" = "$current" ]; then
+                    echo "::notice::Draft already tagged $current (matches the $bump bump) — no change needed."
+                    exit 0
+                  fi
+                  if [ "${DRY_RUN:-}" = "true" ]; then
+                    echo "::notice title=Dry run::Would re-tag draft $current -> $target. No changes applied."
+                    exit 0
+                  fi
+
+                  # Re-tag + fix the "**Full Changelog**" compare link head (…/compare/<base>...<current> -> …...<target>)
+                  # in one gh call. The substitution only touches the segment after the literal "..."; if the body has no
+                  # compare link it is a no-op. gh release edit preserves the body and assets.
+                  body="$(gh release view "$current" --json body --jq .body)"
+                  if [ -n "$body" ] && [ "$body" != "null" ]; then
+                    body="${body//...$current/...$target}"
+                    printf '%s' "$body" > .versioned-body.md
+                    gh release edit "$current" --tag "$target" --title "$target" --notes-file .versioned-body.md
+                  else
+                    gh release edit "$current" --tag "$target" --title "$target"
+                  fi
+                  echo "::notice::Re-tagged draft $current -> $target."

@@ -41,34 +41,27 @@ sequenceDiagram
     - Tags are **not** `v`-prefixed (e.g. `0.1.1`) so they equal `manifest.json` — the
       Obsidian community store and BRAT require the tag to match the plugin version.
 
-2. **Release Detailer** (`.github/workflows/release-detailer.md` → `.lock.yml`, a
-   [gh-aw](https://github.com/github/gh-aw) agentic workflow) runs when _Draft Release_
-   completes. A Copilot/Claude agent reads the PRs and diff in the release range and
-   inserts a user-facing `### :bulb: Details` section into the draft, leaving the
-   native `## What's Changed` and `**Full Changelog**` lines untouched.
+2. **Release Detailer** (`.github/workflows/release-detailer.yml`) runs when _Draft
+   Release_ completes. It uses [`anthropics/claude-code-action`](https://github.com/anthropics/claude-code-action):
+   Claude reads the PRs and diff in the release range and inserts a user-facing
+   `### :bulb: Details` section into the draft, leaving the native `## What's Changed`
+   and `**Full Changelog**` lines untouched.
 
-3. **Release Versioner** (`.github/workflows/release-versioner.md` → `.lock.yml`,
-   another gh-aw workflow) runs when _Release Detailer_ completes. The agent reads the
-   same PRs/diff and decides — per [SemVer](https://semver.org/spec/v0.1.0.html) —
-   whether the release is a **patch**, **minor**, or **major (breaking)** change. A
-   deterministic job then recomputes the target version from the latest **published**
-   release and, if it differs, re-tags the draft (and fixes the `**Full Changelog**`
-   compare link), so the draft already carries the right version before you see it.
-    - **Bump → version:** `major` → `1.0.0`, `minor` → `0.2.0`, `patch` → `0.1.4`
-      (computed from the latest published tag). The agent only ever classifies; the
-      version maths and the `gh release edit` live in the workflow's safe-output job,
-      which **only ever edits a draft** — never a published release.
-    - **Pre-1.0 policy:** while the plugin is `0.y.z`, a `major` decision jumps to
-      `1.0.0`. To keep breaking changes inside `0.x` until you deliberately cut a stable
-      `1.0`, change the `major)` arm of the version maths in `release-versioner.md` to
-      `target="${major}.$((minor + 1)).0"` and recompile.
-    - Re-tagging uses `gh release edit --tag`, which keeps the same release object — so
-      the enriched body and every attached asset (e.g. the SBOM that _Security_ attaches
-      on _Draft Release_ completion) survive the rename. It runs after _Release Detailer_,
-      well after _Security_, so the asset is already in place when the tag changes.
-    - Run it by hand with `gh aw run release-versioner` (optionally with
-      `-F dry_run=true` to log the decision without editing the draft, or `-F tag=<tag>`
-      to target a specific draft).
+3. **Release Versioner** (`.github/workflows/release-versioner.yml`, also
+   `claude-code-action`) runs when _Release Detailer_ completes. Claude reads the same
+   PRs/diff and decides — per [SemVer](https://semver.org/spec/v0.1.0.html) — whether the
+   release is a **patch**, **minor**, or **major (breaking)** change, then re-tags the
+   **draft** to the correct version (recomputed from the latest **published** release) and
+   fixes the `**Full Changelog**` compare link — so the draft already carries the right
+   version before you see it.
+    - **Bump → version:** `major` → `1.0.0`, `minor` → `0.2.0`, `patch` → `0.1.4` (from
+      the latest published tag). Re-tagging uses `gh release edit --tag`, which keeps the
+      same release object, so the enriched body and attached assets (e.g. the SBOM) are
+      preserved. It **only ever edits a draft** — never a published release.
+    - **Pre-1.0 note:** a `major` decision while still `0.y.z` jumps to `1.0.0`. To keep
+      breaking changes inside `0.x` instead, adjust the mapping in the workflow's `prompt`.
+    - Run it by hand from the **Actions** tab (workflow_dispatch) with `dry_run=true` to
+      log the decision without editing, or a specific `tag`.
 
 4. **You review** the draft in the GitHub Releases UI — the tag is **already corrected**
    to the right SemVer version. Sanity-check it (and the Details), then publish; override
@@ -115,18 +108,18 @@ tag. (`versions.json` alone is **not** the version; it's the version→minAppVer
 
 ## One-time setup
 
-- **`COPILOT_GITHUB_TOKEN`** (repo secret) — required for the gh-aw agents (Release
-  Detailer _and_ Release Versioner) on this repo (a token from a Copilot-licensed
-  identity). Without it the draft is still created with native notes at the provisional
-  patch version; only the AI `:bulb: Details` enrichment and the automatic SemVer
-  re-tagging are skipped (you re-tag by hand, as before).
-    - **No-PAT alternative (organisation repos only):** since
-      [2026-06-11](https://github.blog/changelog/2026-06-11-agentic-workflows-no-longer-need-a-personal-access-token/)
-      an **org-owned** repo can drop the PAT by setting `permissions: { copilot-requests: write }`
-      in `release-detailer.md` and `release-versioner.md` (then recompile) — AI credits bill to the org, which must have
-      centralised Copilot billing and the "Allow use of Copilot CLI billed to the organization"
-      policy enabled. This repo is under a **user** account, so it uses the PAT above; transfer
-      it to such an org to switch.
+- **`CLAUDE_CODE_OAUTH_TOKEN`** (repo secret) — auth for the `claude-code-action` agents
+  (Release Detailer _and_ Release Versioner). Generate it from a **Claude Pro/Max
+  subscription** (Copilot Free does **not** work) and store it as an Actions secret:
+    ```bash
+    claude setup-token   # authorise in the browser; copy the long-lived OAuth token
+    gh secret set CLAUDE_CODE_OAUTH_TOKEN --repo u-ways/obsidian-insert-path
+    ```
+    Without it, the draft is still created with native notes at the provisional patch
+    version; only the AI `:bulb: Details` enrichment and the automatic SemVer re-tagging are
+    skipped (you write Details / re-tag by hand). Alternatives — a direct `ANTHROPIC_API_KEY`
+    or Anthropic Workload Identity Federation — are in the
+    [action's setup guide](https://github.com/anthropics/claude-code-action/blob/main/docs/setup.md).
 - **`RELEASE_AUTOMATION_TOKEN`** (repo secret) — needed because `main` has **required
   status checks** (this would also apply to _Require a pull request before merging_) that
   the built-in `github-actions[bot]` can't bypass on this user-owned repo. The publish job
@@ -140,18 +133,9 @@ tag. (`versions.json` alone is **not** the version; it's the version→minAppVer
 
 ## Editing the agents
 
-Both `release-detailer` and `release-versioner` are gh-aw workflows. Their
-`*.lock.yml` files are generated — never edit them by hand. Change the `.md`, then
-recompile and commit **both** the `.md` and its `.lock.yml`:
-
-```bash
-gh extension install github/gh-aw    # once
-gh aw compile release-versioner      # or release-detailer, or omit a name to compile all
-git add .github/workflows/release-versioner.md .github/workflows/release-versioner.lock.yml
-```
-
-`gh aw validate` (schema, no codegen) and `gh aw lint` (actionlint) catch most mistakes
-before they hit CI.
+`release-detailer.yml` and `release-versioner.yml` are plain GitHub Actions workflows —
+to change what Claude does, edit the `prompt:` (and `claude_args:`) in each directly.
+There's no compile or lock step. `actionlint` catches workflow/YAML mistakes.
 
 ## Release-notes categories
 

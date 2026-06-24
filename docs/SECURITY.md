@@ -72,6 +72,8 @@ Knowing the plugin's blast radius helps assess risk:
 ## Secrets
 
 - The plugin requires **no secrets** to build or run.
-- CI uses the built-in `GITHUB_TOKEN`. The one repository secret is **`COPILOT_GITHUB_TOKEN`**,
-  used only by the agentic "Release Detailer" workflow (see [RELEASING.md](RELEASING.md)).
+- CI uses the built-in `GITHUB_TOKEN`. Repository secrets are **`CLAUDE_CODE_OAUTH_TOKEN`**
+  (used only by the "Release Detailer" / "Release Versioner" workflows via
+  `anthropics/claude-code-action`) and **`RELEASE_AUTOMATION_TOKEN`** (the publish push-back);
+  see [RELEASING.md](RELEASING.md).
 - Never commit secrets, tokens, or credentials. Configure them as GitHub Actions secrets.

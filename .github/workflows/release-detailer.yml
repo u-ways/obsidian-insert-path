@@ -1,0 +1,97 @@
+name: Release Detailer
+
+# Enriches the freshly drafted GitHub release with a user-facing ":bulb: Details"
+# section, written by Claude from the PRs + diff in the release. Runs after "Draft
+# Release" completes, before a human publishes; "Release Versioner" then sets the tag.
+#
+# Two steps on purpose: Claude (anthropics/claude-code-action, on this repo's Claude
+# subscription) only READS and writes the proposed notes to a file — it has no release-
+# mutating tools. A trusted shell step then applies the notes, and only ever to a DRAFT.
+
+on:
+    workflow_run:
+        workflows: ["Draft Release"]
+        types: [completed]
+        branches: [main]
+    workflow_dispatch:
+        inputs:
+            tag:
+                description: "Draft release tag to enrich (blank = latest draft)."
+                required: false
+
+permissions:
+    contents: write # view + edit the draft release
+    pull-requests: read # read the merged PRs in the release range
+
+concurrency:
+    group: release-detailer
+    cancel-in-progress: false
+
+jobs:
+    detail:
+        name: Enrich draft release notes
+        # Skip when the upstream run failed/was cancelled (manual dispatch always runs).
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        env:
+            GH_TOKEN: ${{ github.token }}
+            INPUT_TAG: ${{ inputs.tag }}
+        steps:
+            - uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0 # full history + tags for the PR/diff range
+
+            # Step 1 — Claude composes the new body to a file. Read-only tools + Write:
+            # it cannot publish, delete, create or re-tag a release.
+            - uses: anthropics/claude-code-action@74eedf1a1892082d619c3edb66b9402da6520e7f # v1.0.156
+              with:
+                  claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+                  claude_args: |
+                      --allowedTools "Bash(gh release view:*),Bash(gh release list:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh pr diff:*),Bash(git log:*),Bash(git diff:*),Bash(git show:*),Bash(git tag:*),Read,Grep,Glob,Write"
+                      --max-turns 30
+                  prompt: |
+                      You are the release-notes editor for ${{ github.repository }}, an Obsidian plugin. Compose a
+                      concise, user-facing "### :bulb: Details" section for the DRAFT release. Do NOT edit any release
+                      yourself — only write the result to files; a later step applies it.
+
+                      Pick the target draft: the tag "${{ inputs.tag }}" if that is non-empty, otherwise the most recent draft:
+                      gh release list --json tagName,isDraft,createdAt --jq 'map(select(.isDraft))|sort_by(.createdAt)|reverse|.[0].tagName'.
+                      If there is no draft, write nothing and stop.
+
+                      1. Read the draft body: gh release view <tag> --json body.
+                      2. Find the changes in the release range. The body usually has a "**Full Changelog**: .../compare/<base>...<head>"
+                         line — read the PRs/diff in that range with gh pr view / gh pr list and git log/diff; read src/, README.md or
+                         manifest.json only to name commands/settings precisely. "Users" install the plugin in Obsidian — describe what
+                         they see or do differently.
+                      3. Build the FULL new body:
+                         - the original auto-generated "## What's Changed" block, verbatim (byte-for-byte); then a blank line;
+                         - the section, heading EXACTLY "### :bulb: Details": one short framing paragraph (1–3 sentences), then bold
+                           lead-in bullets for each user-visible change; call out any breaking change / "action required", else state
+                           "No action required". British English, under ~250 words, every claim grounded in a PR or diff (no invention);
+                         - then, ONLY IF the original body had a "**Full Changelog**: ..." line: a blank line and that line verbatim. If
+                           there is NO Full Changelog line (e.g. the first release), omit it — do NOT fabricate a compare link.
+                         If the draft already has a "### :bulb: Details" section, replace it in place (same exact heading).
+                      4. Write the full new body to "${{ github.workspace }}/.release-notes.md" and the target tag to
+                         "${{ github.workspace }}/.release-tag.txt". Do not run gh release edit / create / delete / publish.
+
+            # Step 2 — trusted apply. Only ever edits a DRAFT.
+            - name: Apply the notes to the draft
+              run: |
+                  set -euo pipefail
+                  if [ ! -s .release-notes.md ]; then
+                    echo "No notes produced — nothing to apply."
+                    exit 0
+                  fi
+                  tag="${INPUT_TAG:-}"
+                  [ -n "$tag" ] || tag="$(tr -d '[:space:]' < .release-tag.txt 2>/dev/null || true)"
+                  [ -n "$tag" ] || tag="$(gh release list --limit 30 --json tagName,isDraft,createdAt \
+                    --jq 'map(select(.isDraft))|sort_by(.createdAt)|reverse|.[0].tagName // ""')"
+                  if [ -z "$tag" ]; then echo "No draft release — nothing to apply."; exit 0; fi
+                  is_draft="$(gh release view "$tag" --json isDraft --jq .isDraft 2>/dev/null || echo "")"
+                  if [ "$is_draft" != "true" ]; then
+                    echo "::error::Release '$tag' is not a draft (isDraft='$is_draft') — refusing to edit."
+                    exit 1
+                  fi
+                  gh release edit "$tag" --notes-file .release-notes.md
+                  echo "::notice::Enriched draft release $tag."
