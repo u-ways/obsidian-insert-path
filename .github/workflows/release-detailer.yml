@@ -47,6 +47,9 @@ jobs:
             - uses: anthropics/claude-code-action@74eedf1a1892082d619c3edb66b9402da6520e7f # v1.0.156
               with:
                   claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+                  # Use the workflow's own token directly so the action skips its OIDC
+                  # GitHub-App token exchange (which would need id-token: write + the Claude App).
+                  github_token: ${{ github.token }}
                   claude_args: |
                       --allowedTools "Bash(gh release view:*),Bash(gh release list:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh pr diff:*),Bash(git log:*),Bash(git diff:*),Bash(git show:*),Bash(git tag:*),Read,Grep,Glob,Write"
                       --max-turns 30
