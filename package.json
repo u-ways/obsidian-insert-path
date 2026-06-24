@@ -35,7 +35,7 @@
 		"esbuild": "^0.28.1",
 		"eslint": "^9",
 		"eslint-plugin-obsidianmd": "^0.3.0",
-		"globals": "^15",
+		"globals": "^17",
 		"obsidian": "latest",
 		"prettier": "^3",
 		"typescript": "^6.0.3",
