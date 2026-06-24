@@ -44,6 +44,8 @@ export interface InsertPathSettings {
 	includeHidden: boolean;
 	/** Cap on walked entries before truncation (guards against huge trees). */
 	maxResults: number;
+	/** How many levels deep the directory-preview tree descends (default 2). */
+	treeDepth: number;
 	/** Max on-disk file size to syntax-highlight, in bytes. 0 disables the size limit. */
 	maxHighlightBytes: number;
 	/**
@@ -69,6 +71,7 @@ export const DEFAULT_SETTINGS: InsertPathSettings = {
 	followSymlinks: true,
 	includeHidden: true,
 	maxResults: 10000,
+	treeDepth: 2,
 	maxHighlightBytes: 1024 * 1024,
 	maxHighlightLineLength: 5000,
 	splitRatio: 0.5,

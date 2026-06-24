@@ -51,6 +51,21 @@ export class InsertPathSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName("Directory tree depth")
+			.setDesc(
+				"How many levels deep the preview tree shows for directories. The default is 2. Deeper trees can be slower to render.",
+			)
+			.addText((text) =>
+				text.setValue(String(this.plugin.settings.treeDepth)).onChange(async (value) => {
+					const n = Number.parseInt(value, 10);
+					if (Number.isFinite(n) && n >= 1) {
+						this.plugin.settings.treeDepth = n;
+						await this.plugin.saveSettings();
+					}
+				}),
+			);
+
+		new Setting(containerEl)
 			.setName("Follow symlinks")
 			.setDesc("Descend into symlinked directories (cycles are handled safely).")
 			.addToggle((toggle) =>

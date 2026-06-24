@@ -46,11 +46,34 @@ describe("previewDir", () => {
 		);
 	});
 
-	it("does not descend past level 2 (sub/ children are hidden)", async () => {
+	it("does not descend past level 2 (sub/ children are hidden) by default", async () => {
 		await write("p/beta/sub/deep.txt");
 		const tree = await previewDir(path.join(tmp, "p"));
 		expect(tree).toContain("sub/");
 		expect(tree).not.toContain("deep.txt");
+	});
+
+	it("descends deeper when maxDepth is increased", async () => {
+		await write("p/beta/sub/deep.txt");
+		const tree = await previewDir(path.join(tmp, "p"), { maxDepth: 3 });
+		expect(tree).toContain("sub/");
+		expect(tree).toContain("deep.txt");
+	});
+
+	it("shows only the top level at maxDepth 1", async () => {
+		await write("p/alpha/a1.txt");
+		await write("p/zeta.txt");
+		const tree = await previewDir(path.join(tmp, "p"), { maxDepth: 1 });
+		expect(tree).toContain("alpha/");
+		expect(tree).toContain("zeta.txt");
+		expect(tree).not.toContain("a1.txt");
+	});
+
+	it("clamps a maxDepth below 1 to a single level", async () => {
+		await write("p/alpha/a1.txt");
+		const tree = await previewDir(path.join(tmp, "p"), { maxDepth: 0 });
+		expect(tree).toContain("alpha/");
+		expect(tree).not.toContain("a1.txt");
 	});
 
 	it("collapses entries beyond maxEntries into a '… (N more)' line", async () => {

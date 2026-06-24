@@ -6,6 +6,8 @@ export interface DirPreviewOptions {
 	skip?: string[];
 	/** Max children listed per directory level before collapsing to "… (N more)". */
 	maxEntries?: number;
+	/** How many levels deep to descend (default 2). */
+	maxDepth?: number;
 }
 
 export interface FilePreviewOptions {
@@ -28,6 +30,7 @@ export interface FilePreview {
 }
 
 const DEFAULT_MAX_ENTRIES = 50;
+const DEFAULT_MAX_DEPTH = 2;
 const DEFAULT_MAX_LINES = 200;
 const DEFAULT_MAX_BYTES = 64 * 1024;
 
@@ -82,15 +85,17 @@ async function appendChildren(
 }
 
 /**
- * Render a 2-level indented tree of `dir` (like `eza --tree --level=2`).
- * Prunes `skip` directories; returns a placeholder if the directory can't be read.
+ * Render an indented tree of `dir` up to `maxDepth` levels (default 2, like
+ * `eza --tree --level=N`). Prunes `skip` directories; returns a placeholder if
+ * the directory can't be read.
  */
 export async function previewDir(dir: string, opts: DirPreviewOptions = {}): Promise<string> {
 	const skip = new Set(opts.skip ?? []);
 	const maxEntries = opts.maxEntries ?? DEFAULT_MAX_ENTRIES;
+	const maxDepth = Math.max(1, Math.floor(opts.maxDepth ?? DEFAULT_MAX_DEPTH));
 	const lines: string[] = [path.basename(dir) + "/"];
 	try {
-		await appendChildren(dir, "", 1, 2, skip, maxEntries, lines);
+		await appendChildren(dir, "", 1, maxDepth, skip, maxEntries, lines);
 	} catch {
 		return "[cannot read directory]";
 	}
