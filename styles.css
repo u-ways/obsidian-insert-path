@@ -10,7 +10,8 @@
 	align-items: center;
 	gap: var(--size-4-2);
 	margin-bottom: var(--size-4-2);
-	font-size: var(--font-ui-small);
+	/* +30% over the theme's small UI size for a more legible root path. */
+	font-size: calc(var(--font-ui-small) * 1.3);
 	color: var(--text-muted);
 }
 
@@ -18,7 +19,8 @@
 	flex: 0 0 auto;
 	padding: 0 var(--size-2-2);
 	border-radius: var(--radius-s);
-	font-size: var(--font-ui-smaller);
+	/* +30%, kept in step with the root path it sits beside. */
+	font-size: calc(var(--font-ui-smaller) * 1.3);
 	font-weight: var(--font-semibold);
 	color: var(--text-on-accent);
 	background-color: var(--interactive-accent);
@@ -148,9 +150,39 @@
 
 .ip-footer {
 	margin-top: var(--size-4-2);
-	font-size: var(--font-ui-smaller);
+	/* +30% over the theme's smaller UI size so the key hints read more easily. */
+	font-size: calc(var(--font-ui-smaller) * 1.3);
 	color: var(--text-faint);
-	text-align: center;
+	/* Centered, wrapping row of key/label hints; the gaps replace the old "·". */
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: var(--size-2-1) var(--size-4-2);
+}
+
+/* One hint = its key chip(s) sitting tight against the action label. */
+.ip-hint {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--size-2-1);
+	white-space: nowrap;
+}
+
+/* A keycap: a bordered, theme-aware chip so keys read distinctly from labels. */
+.ip-key {
+	padding: 0 var(--size-2-1);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background-color: var(--background-modifier-hover);
+	color: var(--text-muted);
+	font-family: var(--font-monospace);
+	font-size: 0.9em;
+	line-height: 1.4;
+}
+
+.ip-hint-label {
+	color: var(--text-faint);
 }
 
 /* Root switcher */
