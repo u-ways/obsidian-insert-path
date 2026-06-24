@@ -1,7 +1,8 @@
 /* Insert Path — fzf-style picker modal */
 
 .ip-modal {
-	width: min(1100px, 90vw);
+	/* 1100px (original) → 1430px (+30%) → 1716px (+20% more); capped at 90vw on small screens. */
+	width: min(1716px, 90vw);
 }
 
 .ip-root-bar {
@@ -40,19 +41,59 @@
 
 .ip-body {
 	display: flex;
-	gap: var(--size-4-2);
-	height: 60vh;
+	/* No gap: the draggable divider provides the spacing between the panes. */
+	/* 60vh (original) → 78vh (+30%) → 54.6vh (−30%). */
+	height: 54.6vh;
 	min-height: 0;
 }
 
 .ip-results,
 .ip-preview {
-	flex: 1 1 50%;
 	min-width: 0;
 	overflow: auto;
 	padding: var(--size-4-1);
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-s);
+}
+
+/* Results width is set inline (flex-basis) from the saved split ratio; the
+   preview pane takes whatever is left. */
+.ip-results {
+	flex: 0 0 50%;
+}
+
+.ip-preview {
+	flex: 1 1 0;
+}
+
+/* Draggable divider between the panes. The hit zone fills the old gap width;
+   a thin centered line marks it and thickens/accents on hover or while dragging. */
+.ip-divider {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: stretch;
+	justify-content: center;
+	width: var(--size-4-2);
+	cursor: col-resize;
+}
+
+.ip-divider::after {
+	content: "";
+	width: 1px;
+	border-radius: var(--radius-s);
+	background-color: var(--background-modifier-border);
+}
+
+.ip-divider:hover::after,
+.ip-modal.ip-dragging .ip-divider::after {
+	width: 3px;
+	background-color: var(--interactive-accent);
+}
+
+/* While dragging, suppress text selection and keep the resize cursor everywhere. */
+.ip-modal.ip-dragging {
+	cursor: col-resize;
+	user-select: none;
 }
 
 .ip-row {

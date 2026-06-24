@@ -7,7 +7,7 @@ import { Matcher, type MatchResult } from "../core/matcher";
 import { previewDir, previewFile } from "../core/preview";
 import { getPrism, prismLangFor, shouldHighlight } from "../core/prism";
 import { addRecentRoot } from "../core/recent";
-import { parseSkip, type WalkMode } from "../types";
+import { clampSplitRatio, parseSkip, SPLIT_DEFAULT, type WalkMode } from "../types";
 import type InsertPathPlugin from "../main";
 import { RootSwitcher } from "./RootSwitcher";
 
@@ -48,9 +48,12 @@ export class InsertPathModal extends Modal {
 	private modeEl!: HTMLElement;
 	private rootPathEl!: HTMLElement;
 	private searchEl!: HTMLInputElement;
+	private bodyEl!: HTMLElement;
 	private resultsEl!: HTMLElement;
+	private dividerEl!: HTMLElement;
 	private previewEl!: HTMLElement;
 	private rowEls: HTMLElement[] = [];
+	private dragCleanup: (() => void) | null = null;
 
 	constructor(
 		app: App,
@@ -77,6 +80,7 @@ export class InsertPathModal extends Modal {
 
 	onClose(): void {
 		this.walkController?.abort();
+		this.endDrag(); // drop any in-progress divider drag listeners
 		window.clearTimeout(this.searchTimer);
 		window.clearTimeout(this.previewTimer);
 		window.clearTimeout(this.streamTimer);
@@ -98,9 +102,15 @@ export class InsertPathModal extends Modal {
 		});
 		this.searchEl.addEventListener("input", () => this.onQueryChange());
 
-		const body = contentEl.createDiv({ cls: "ip-body" });
-		this.resultsEl = body.createDiv({ cls: "ip-results" });
-		this.previewEl = body.createDiv({ cls: "ip-preview" });
+		this.bodyEl = contentEl.createDiv({ cls: "ip-body" });
+		this.resultsEl = this.bodyEl.createDiv({ cls: "ip-results" });
+		this.dividerEl = this.bodyEl.createDiv({ cls: "ip-divider" });
+		this.dividerEl.setAttribute("aria-label", "Drag to resize · double-click to reset");
+		this.previewEl = this.bodyEl.createDiv({ cls: "ip-preview" });
+
+		this.applySplit(this.plugin.settings.splitRatio);
+		this.dividerEl.addEventListener("pointerdown", (e) => this.startDrag(e));
+		this.dividerEl.addEventListener("dblclick", () => void this.setSplit(SPLIT_DEFAULT));
 
 		contentEl.createDiv({
 			cls: "ip-footer",
@@ -108,6 +118,51 @@ export class InsertPathModal extends Modal {
 		});
 
 		this.updateRootBar();
+	}
+
+	/** Apply a results-pane width fraction to the layout (preview takes the rest). */
+	private applySplit(ratio: number): void {
+		const pct = (clampSplitRatio(ratio) * 100).toFixed(2);
+		this.resultsEl.style.flex = `0 0 ${pct}%`;
+	}
+
+	/** Apply a split and persist it so it survives the next time the picker opens. */
+	private async setSplit(ratio: number): Promise<void> {
+		const clamped = clampSplitRatio(ratio);
+		this.applySplit(clamped);
+		this.plugin.settings.splitRatio = clamped;
+		await this.plugin.saveSettings();
+	}
+
+	/** Drag the divider: live-resize while held, then persist the ratio on release. */
+	private startDrag(e: PointerEvent): void {
+		e.preventDefault();
+		this.modalEl.addClass("ip-dragging");
+		let ratio = this.plugin.settings.splitRatio;
+
+		const onMove = (ev: PointerEvent) => {
+			const rect = this.bodyEl.getBoundingClientRect();
+			if (rect.width === 0) return;
+			ratio = clampSplitRatio((ev.clientX - rect.left) / rect.width);
+			this.applySplit(ratio);
+		};
+		const onUp = () => {
+			this.endDrag();
+			void this.setSplit(ratio);
+		};
+
+		this.dragCleanup = () => {
+			document.removeEventListener("pointermove", onMove);
+			document.removeEventListener("pointerup", onUp);
+			this.modalEl.removeClass("ip-dragging");
+		};
+		document.addEventListener("pointermove", onMove);
+		document.addEventListener("pointerup", onUp);
+	}
+
+	private endDrag(): void {
+		this.dragCleanup?.();
+		this.dragCleanup = null;
 	}
 
 	private registerKeys(): void {
