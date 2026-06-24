@@ -42,6 +42,18 @@ function compareDirents(a: Dirent, b: Dirent): number {
 	return a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
 }
 
+/** One rendered row of a directory-preview tree, tagged for depth-based colouring. */
+export interface DirTreeLine {
+	/** Nesting depth: 0 = the root line, 1 = its children, and so on. */
+	depth: number;
+	/** The full rendered row: indent prefix + connector + name (with a trailing "/" for dirs). */
+	text: string;
+	/** True when the row is a directory entry (the root counts as one). */
+	isDir: boolean;
+	/** True for non-entry rows — overflow ("… (N more)"), "[unreadable]", read errors. */
+	muted: boolean;
+}
+
 async function appendChildren(
 	dir: string,
 	prefix: string,
@@ -49,7 +61,7 @@ async function appendChildren(
 	maxDepth: number,
 	skip: Set<string>,
 	maxEntries: number,
-	lines: string[],
+	lines: DirTreeLine[],
 ): Promise<void> {
 	const dirents = (await readdir(dir)).filter((d) => !skip.has(d.name)).sort(compareDirents);
 
@@ -60,7 +72,12 @@ async function appendChildren(
 		const isLast = i === shown.length - 1 && overflow === 0;
 		const isDir = d.isDirectory();
 		const connector = isLast ? "└── " : "├── ";
-		lines.push(prefix + connector + d.name + (isDir ? "/" : ""));
+		lines.push({
+			depth,
+			text: prefix + connector + d.name + (isDir ? "/" : ""),
+			isDir,
+			muted: false,
+		});
 		if (isDir && depth < maxDepth) {
 			const childPrefix = prefix + (isLast ? "    " : "│   ");
 			try {
@@ -74,32 +91,54 @@ async function appendChildren(
 					lines,
 				);
 			} catch {
-				lines.push(childPrefix + "└── [unreadable]");
+				lines.push({
+					depth: depth + 1,
+					text: childPrefix + "└── [unreadable]",
+					isDir: false,
+					muted: true,
+				});
 			}
 		}
 	}
 
 	if (overflow > 0) {
-		lines.push(prefix + `└── … (${overflow} more)`);
+		lines.push({
+			depth,
+			text: prefix + `└── … (${overflow} more)`,
+			isDir: false,
+			muted: true,
+		});
 	}
 }
 
 /**
- * Render an indented tree of `dir` up to `maxDepth` levels (default 2, like
- * `eza --tree --level=N`). Prunes `skip` directories; returns a placeholder if
- * the directory can't be read.
+ * Build an indented tree of `dir` up to `maxDepth` levels (default 2, like
+ * `eza --tree --level=N`) as depth-tagged rows. Prunes `skip` directories; returns
+ * a single placeholder row if the directory can't be read.
+ *
+ * Each row carries its nesting `depth` so the UI can colour the tree by level.
  */
-export async function previewDir(dir: string, opts: DirPreviewOptions = {}): Promise<string> {
+export async function buildDirTree(
+	dir: string,
+	opts: DirPreviewOptions = {},
+): Promise<DirTreeLine[]> {
 	const skip = new Set(opts.skip ?? []);
 	const maxEntries = opts.maxEntries ?? DEFAULT_MAX_ENTRIES;
 	const maxDepth = Math.max(1, Math.floor(opts.maxDepth ?? DEFAULT_MAX_DEPTH));
-	const lines: string[] = [path.basename(dir) + "/"];
+	const lines: DirTreeLine[] = [
+		{ depth: 0, text: path.basename(dir) + "/", isDir: true, muted: false },
+	];
 	try {
 		await appendChildren(dir, "", 1, maxDepth, skip, maxEntries, lines);
 	} catch {
-		return "[cannot read directory]";
+		return [{ depth: 0, text: "[cannot read directory]", isDir: false, muted: true }];
 	}
-	return lines.join("\n");
+	return lines;
+}
+
+/** The plain-text rendering of {@link buildDirTree} (one row per line). */
+export async function previewDir(dir: string, opts: DirPreviewOptions = {}): Promise<string> {
+	return (await buildDirTree(dir, opts)).map((line) => line.text).join("\n");
 }
 
 /**

@@ -46,6 +46,8 @@ export interface InsertPathSettings {
 	maxResults: number;
 	/** How many levels deep the directory-preview tree descends (default 2). */
 	treeDepth: number;
+	/** Rainbow-colour the directory-preview tree by nesting depth (default true). */
+	colorizeTree: boolean;
 	/** Max on-disk file size to syntax-highlight, in bytes. 0 disables the size limit. */
 	maxHighlightBytes: number;
 	/**
@@ -72,6 +74,7 @@ export const DEFAULT_SETTINGS: InsertPathSettings = {
 	includeHidden: true,
 	maxResults: 10000,
 	treeDepth: 2,
+	colorizeTree: true,
 	maxHighlightBytes: 1024 * 1024,
 	maxHighlightLineLength: 5000,
 	splitRatio: 0.5,

@@ -6,7 +6,7 @@ import * as os from "os";
 import { walk } from "../core/walker";
 import { Matcher, type MatchResult } from "../core/matcher";
 import { locateInVault } from "../core/open";
-import { previewDir, previewFile } from "../core/preview";
+import { buildDirTree, previewFile, type DirTreeLine } from "../core/preview";
 import { getPrism, prismLangFor, shouldHighlight } from "../core/prism";
 import { addRecentRoot } from "../core/recent";
 import { clampSplitRatio, parseSkip, SPLIT_DEFAULT, type WalkMode } from "../types";
@@ -17,6 +17,8 @@ const SEARCH_DEBOUNCE_MS = 60;
 const PREVIEW_DEBOUNCE_MS = 60;
 const STREAM_THROTTLE_MS = 100;
 const RESULT_LIMIT = 200;
+/** Number of theme colours the rainbow tree cycles through (see the .ip-tree-d* CSS classes). */
+const TREE_DEPTH_COLORS = 8;
 
 /**
  * The fzf-style picker: search box, results list with live match highlighting,
@@ -361,13 +363,18 @@ export class InsertPathModal extends Modal {
 		const token = ++this.previewToken;
 
 		if (this.mode === "dir") {
-			const text = await previewDir(abs, {
+			const lines = await buildDirTree(abs, {
 				skip: parseSkip(this.plugin.settings.skip),
 				maxDepth: this.plugin.settings.treeDepth,
 			});
 			if (token !== this.previewToken) return; // a newer selection won
 			this.previewEl.empty();
-			this.previewEl.createEl("pre", { cls: "ip-tree", text }); // the ascii tree stays plain
+			const pre = this.previewEl.createEl("pre", { cls: "ip-tree" });
+			if (this.plugin.settings.colorizeTree) {
+				this.renderColoredTree(pre, lines);
+			} else {
+				pre.setText(lines.map((line) => line.text).join("\n")); // textContent only
+			}
 			return;
 		}
 
@@ -402,6 +409,25 @@ export class InsertPathModal extends Modal {
 				// Leave the plain text already in the DOM — byte-for-byte the old behavior.
 			}
 		}
+	}
+
+	/**
+	 * Render the directory tree as one span per row, coloured by nesting depth
+	 * (cycling the theme's --color-* palette via the .ip-tree-d* classes), with
+	 * directories bold and placeholder rows muted. Each span carries its own
+	 * newline so the <pre> keeps the tree's layout.
+	 */
+	private renderColoredTree(pre: HTMLElement, lines: DirTreeLine[]): void {
+		lines.forEach((line, i) => {
+			const cls = ["ip-tree-line"];
+			if (line.muted) {
+				cls.push("ip-tree-muted");
+			} else {
+				cls.push(`ip-tree-d${line.depth % TREE_DEPTH_COLORS}`);
+				if (line.isDir) cls.push("is-dir");
+			}
+			pre.createSpan({ cls, text: (i > 0 ? "\n" : "") + line.text });
+		});
 	}
 
 	private choose(): false {

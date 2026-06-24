@@ -66,6 +66,18 @@ export class InsertPathSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName("Colorize directory tree")
+			.setDesc(
+				"Rainbow-colour the directory-preview tree by nesting depth, using your theme's palette. Turn off for a plain, single-colour tree.",
+			)
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.colorizeTree).onChange(async (value) => {
+					this.plugin.settings.colorizeTree = value;
+					await this.plugin.saveSettings();
+				}),
+			);
+
+		new Setting(containerEl)
 			.setName("Follow symlinks")
 			.setDesc("Descend into symlinked directories (cycles are handled safely).")
 			.addToggle((toggle) =>
