@@ -56,14 +56,21 @@ jobs:
               env:
                   TAG: ${{ steps.version.outputs.version }}
                   GH_TOKEN: ${{ github.token }}
+                  REPO: ${{ github.repository }}
               # language=bash
               run: |
                   set -euo pipefail
-                  # Only delete a pre-existing release at this tag if it is still a DRAFT,
-                  # so we never clobber a published release.
-                  if gh release view "${TAG}" --json isDraft --jq '.isDraft' 2>/dev/null | grep -qx 'true'; then
-                    gh release delete "${TAG}" --yes
-                  fi
+                  # Delete EVERY existing draft release before creating a fresh one. We can't
+                  # match by tag: the "Release Versioner" re-tags the in-flight draft to a
+                  # semantic version (e.g. a minor bump) that differs from the patch TAG
+                  # computed above, so a tag-based delete misses it and stale drafts pile up
+                  # (one per push). Published releases are never drafts, so this only ever
+                  # removes the single in-flight "next release" draft.
+                  gh api "repos/${REPO}/releases" --paginate \
+                    --jq '.[] | select(.draft) | .id' \
+                    | while read -r id; do
+                        [[ -n "${id}" ]] && gh api -X DELETE "repos/${REPO}/releases/${id}"
+                      done
                   link="$(gh release create "${TAG}" \
                     --draft \
                     --generate-notes \
