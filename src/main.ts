@@ -8,9 +8,7 @@ import { InsertPathSettingTab } from "./ui/settings";
 export default class InsertPathPlugin extends Plugin {
 	settings: InsertPathSettings = { ...DEFAULT_SETTINGS };
 
-	async onload(): Promise<void> {
-		await this.loadSettings();
-
+	onload(): void {
 		this.addCommand({
 			id: "insert-directory-path",
 			name: "Insert directory path",
@@ -24,6 +22,13 @@ export default class InsertPathPlugin extends Plugin {
 		});
 
 		this.addSettingTab(new InsertPathSettingTab(this.app, this));
+
+		// Keep onload synchronous so it stays out of Obsidian's startup await-chain:
+		// read the (tiny) saved settings once the workspace is ready rather than fetching
+		// data during load. `settings` is seeded with DEFAULT_SETTINGS, so the picker and
+		// settings tab are safe to read before this resolves — and neither is reachable
+		// until well after layout-ready. https://docs.obsidian.md/plugins/guides/load-time
+		this.app.workspace.onLayoutReady(() => void this.loadSettings());
 	}
 
 	private openPicker(editor: Editor, mode: WalkMode): void {
