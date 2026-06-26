@@ -6,7 +6,7 @@
 // errors if it is unset — there is no built-in default vault.
 //
 // Links manifest.json, main.js and styles.css into
-// <vault>/.obsidian/plugins/insert-path/ and drops an empty `.hotreload` marker
+// <vault>/.obsidian/plugins/path-picker/ and drops an empty `.hotreload` marker
 // so pjeby's Hot Reload plugin reloads on every esbuild rebuild.
 
 import { mkdir, writeFile, rm, symlink, access } from "fs/promises";
@@ -14,7 +14,7 @@ import { fileURLToPath } from "url";
 import * as path from "path";
 import process from "process";
 
-const PLUGIN_ID = "insert-path";
+const PLUGIN_ID = "path-picker";
 
 const vault = process.env.DEFAULT_OBSIDIAN_VAULT?.trim();
 if (!vault) {
@@ -47,5 +47,5 @@ for (const file of files) {
 
 await writeFile(path.join(pluginDir, ".hotreload"), "");
 
-console.log(`Linked Insert Path into:\n  ${pluginDir}`);
-console.log("Enable 'Insert Path' (and pjeby 'Hot Reload') under Settings → Community plugins.");
+console.log(`Linked Path Picker into:\n  ${pluginDir}`);
+console.log("Enable 'Path Picker' (and pjeby 'Hot Reload') under Settings → Community plugins.");

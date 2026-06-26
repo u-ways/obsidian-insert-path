@@ -1,6 +1,6 @@
 {
-	"id": "insert-path",
-	"name": "Insert Path",
+	"id": "path-picker",
+	"name": "Path Picker",
 	"version": "0.3.0",
 	"minAppVersion": "1.4.0",
 	"description": "Fuzzy-find any file or directory under a root and insert its path at the cursor.",

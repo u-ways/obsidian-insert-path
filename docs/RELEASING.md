@@ -87,7 +87,7 @@ workflow run and commit that produced them. Anyone can verify a downloaded asset
 this repository's CI (and was not tampered with) using the GitHub CLI:
 
 ```bash
-gh attestation verify main.js --repo u-ways/obsidian-insert-path
+gh attestation verify main.js --repo u-ways/obsidian-path-picker
 ```
 
 The attestation is keyed by the file's SHA-256 digest, so it stays valid regardless of the
@@ -113,7 +113,7 @@ tag. (`versions.json` alone is **not** the version; it's the version→minAppVer
   subscription** (Copilot Free does **not** work) and store it as an Actions secret:
     ```bash
     claude setup-token   # authorise in the browser; copy the long-lived OAuth token
-    gh secret set CLAUDE_CODE_OAUTH_TOKEN --repo u-ways/obsidian-insert-path
+    gh secret set CLAUDE_CODE_OAUTH_TOKEN --repo u-ways/obsidian-path-picker
     ```
     Without it, the draft is still created with native notes at the provisional patch
     version; only the AI `:bulb: Details` enrichment and the automatic SemVer re-tagging are

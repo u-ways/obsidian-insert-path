@@ -1,11 +1,11 @@
-/* Insert Path — fzf-style picker modal */
+/* Path Picker — fzf-style picker modal */
 
-.ip-modal {
+.pp-modal {
 	/* 1100px (original) → 1430px (+30%) → 1716px (+20% more); capped at 90vw on small screens. */
 	width: min(1716px, 90vw);
 }
 
-.ip-root-bar {
+.pp-root-bar {
 	display: flex;
 	align-items: center;
 	gap: var(--size-4-2);
@@ -15,7 +15,7 @@
 	color: var(--text-muted);
 }
 
-.ip-mode {
+.pp-mode {
 	flex: 0 0 auto;
 	padding: 0 var(--size-2-2);
 	border-radius: var(--radius-s);
@@ -26,22 +26,22 @@
 	background-color: var(--interactive-accent);
 }
 
-.ip-mode.is-file {
+.pp-mode.is-file {
 	background-color: var(--text-accent);
 }
 
-.ip-root-path {
+.pp-root-path {
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
 }
 
-.ip-search {
+.pp-search {
 	width: 100%;
 	margin-bottom: var(--size-4-2);
 }
 
-.ip-body {
+.pp-body {
 	display: flex;
 	/* No gap: the draggable divider provides the spacing between the panes. */
 	/* 60vh (original) → 78vh (+30%) → 54.6vh (−30%). */
@@ -49,8 +49,8 @@
 	min-height: 0;
 }
 
-.ip-results,
-.ip-preview {
+.pp-results,
+.pp-preview {
 	min-width: 0;
 	overflow: auto;
 	padding: var(--size-4-1);
@@ -60,17 +60,17 @@
 
 /* Results width is set inline (flex-basis) from the saved split ratio; the
    preview pane takes whatever is left. */
-.ip-results {
+.pp-results {
 	flex: 0 0 50%;
 }
 
-.ip-preview {
+.pp-preview {
 	flex: 1 1 0;
 }
 
 /* Draggable divider between the panes. The hit zone fills the old gap width;
    a thin centered line marks it and thickens/accents on hover or while dragging. */
-.ip-divider {
+.pp-divider {
 	flex: 0 0 auto;
 	display: flex;
 	align-items: stretch;
@@ -79,26 +79,26 @@
 	cursor: col-resize;
 }
 
-.ip-divider::after {
+.pp-divider::after {
 	content: "";
 	width: 1px;
 	border-radius: var(--radius-s);
 	background-color: var(--background-modifier-border);
 }
 
-.ip-divider:hover::after,
-.ip-modal.ip-dragging .ip-divider::after {
+.pp-divider:hover::after,
+.pp-modal.pp-dragging .pp-divider::after {
 	width: 3px;
 	background-color: var(--interactive-accent);
 }
 
 /* While dragging, suppress text selection and keep the resize cursor everywhere. */
-.ip-modal.ip-dragging {
+.pp-modal.pp-dragging {
 	cursor: col-resize;
 	user-select: none;
 }
 
-.ip-row {
+.pp-row {
 	padding: var(--size-2-1) var(--size-4-1);
 	border-radius: var(--radius-s);
 	overflow: hidden;
@@ -109,26 +109,26 @@
 	font-size: var(--font-ui-small);
 }
 
-.ip-row:hover {
+.pp-row:hover {
 	background-color: var(--background-modifier-hover);
 }
 
-.ip-row.is-selected {
+.pp-row.is-selected {
 	background-color: var(--background-modifier-hover);
 	box-shadow: inset 2px 0 0 0 var(--interactive-accent);
 }
 
-.ip-match {
+.pp-match {
 	color: var(--text-accent);
 	font-weight: var(--font-semibold);
 }
 
-.ip-empty {
+.pp-empty {
 	padding: var(--size-4-1);
 	color: var(--text-faint);
 }
 
-.ip-preview pre {
+.pp-preview pre {
 	margin: 0;
 	white-space: pre;
 	font-family: var(--font-monospace);
@@ -136,56 +136,56 @@
 }
 
 /* Plain (un-highlighted) previews stay muted: the directory tree (a bare-text
-   <pre class="ip-tree">) and any <code> without a Prism `language-` class
+   <pre class="pp-tree">) and any <code> without a Prism `language-` class
    (binary / unreadable / size-capped / unknown language). Highlighted code is
    left untouched so the user's theme `.token.*` colors win. */
-.ip-preview pre.ip-tree,
-.ip-preview pre > code:not([class*="language-"]) {
+.pp-preview pre.pp-tree,
+.pp-preview pre > code:not([class*="language-"]) {
 	color: var(--text-muted);
 }
 
-.ip-truncated {
+.pp-truncated {
 	color: var(--text-faint);
 }
 
 /* Rainbow directory tree (the "Colorize directory tree" setting). Each nesting
    depth cycles one of the theme's named palette colours, so the tree adapts to
-   the active theme. These per-span colours override the muted .ip-tree colour
+   the active theme. These per-span colours override the muted .pp-tree colour
    above; directories are bold and non-entry rows (overflow / unreadable) stay faint. */
-.ip-tree-d0 {
+.pp-tree-d0 {
 	color: var(--color-red);
 }
-.ip-tree-d1 {
+.pp-tree-d1 {
 	color: var(--color-orange);
 }
-.ip-tree-d2 {
+.pp-tree-d2 {
 	color: var(--color-yellow);
 }
-.ip-tree-d3 {
+.pp-tree-d3 {
 	color: var(--color-green);
 }
-.ip-tree-d4 {
+.pp-tree-d4 {
 	color: var(--color-cyan);
 }
-.ip-tree-d5 {
+.pp-tree-d5 {
 	color: var(--color-blue);
 }
-.ip-tree-d6 {
+.pp-tree-d6 {
 	color: var(--color-purple);
 }
-.ip-tree-d7 {
+.pp-tree-d7 {
 	color: var(--color-pink);
 }
 
-.ip-tree-line.is-dir {
+.pp-tree-line.is-dir {
 	font-weight: var(--font-semibold);
 }
 
-.ip-tree-muted {
+.pp-tree-muted {
 	color: var(--text-faint);
 }
 
-.ip-footer {
+.pp-footer {
 	margin-top: var(--size-4-2);
 	/* +30% over the theme's smaller UI size so the key hints read more easily. */
 	font-size: calc(var(--font-ui-smaller) * 1.3);
@@ -199,7 +199,7 @@
 }
 
 /* One hint = its key chip(s) sitting tight against the action label. */
-.ip-hint {
+.pp-hint {
 	display: inline-flex;
 	align-items: center;
 	gap: var(--size-2-1);
@@ -207,7 +207,7 @@
 }
 
 /* A keycap: a bordered, theme-aware chip so keys read distinctly from labels. */
-.ip-key {
+.pp-key {
 	padding: 0 var(--size-2-1);
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-s);
@@ -218,19 +218,19 @@
 	line-height: 1.4;
 }
 
-.ip-hint-label {
+.pp-hint-label {
 	color: var(--text-faint);
 }
 
 /* Root switcher */
-.ip-root-switcher .ip-root-list {
+.pp-root-switcher .pp-root-list {
 	display: flex;
 	flex-direction: column;
 	gap: var(--size-2-1);
 	margin-bottom: var(--size-4-2);
 }
 
-.ip-root-choice {
+.pp-root-choice {
 	width: 100%;
 	text-align: left;
 	font-family: var(--font-monospace);
@@ -240,11 +240,11 @@
 /* Skip-directories setting: a full-width, resizable, monospace box so the long
    comma-separated list is easy to read and edit. The whole row stacks vertically
    (name/description above the box) and is placed last on the settings page. */
-.ip-skip-setting {
+.pp-skip-setting {
 	display: block;
 }
 
-.ip-skip-setting .setting-item-control {
+.pp-skip-setting .setting-item-control {
 	/* Stack the textarea and its warning vertically (full width), so the warning
 	   sits BELOW the box instead of to its right (which would shrink the box). */
 	flex-direction: column;
@@ -253,7 +253,7 @@
 	padding-top: var(--size-2-2);
 }
 
-.ip-skip-setting .setting-item-control textarea {
+.pp-skip-setting .setting-item-control textarea {
 	width: 100%;
 	resize: vertical;
 	font-family: var(--font-monospace);
@@ -262,17 +262,17 @@
 }
 
 /* Inline validation under the box: likely mistakes (missing comma, path separator). */
-.ip-skip-warning {
+.pp-skip-warning {
 	width: 100%;
 	margin-top: var(--size-2-2);
 	color: var(--text-error);
 	font-size: var(--font-ui-smaller);
 }
 
-.ip-skip-warning:empty {
+.pp-skip-warning:empty {
 	display: none;
 }
 
-.ip-skip-warning-line + .ip-skip-warning-line {
+.pp-skip-warning-line + .pp-skip-warning-line {
 	margin-top: var(--size-2-1);
 }

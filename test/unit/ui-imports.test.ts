@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { InsertPathSettingTab } from "../../src/ui/settings";
+import { PathPickerSettingTab } from "../../src/ui/settings";
 import { RootSwitcher } from "../../src/ui/RootSwitcher";
-import { InsertPathModal } from "../../src/ui/InsertPathModal";
+import { PathPickerModal } from "../../src/ui/PathPickerModal";
 
 // The UI layer imports `obsidian`, which only resolves to the real runtime
 // inside Obsidian. These smoke tests confirm the vitest alias to the stub lets
@@ -9,7 +9,7 @@ import { InsertPathModal } from "../../src/ui/InsertPathModal";
 // imports from leaking into the runtime bundle).
 describe("ui module imports", () => {
 	it("loads the settings tab class", () => {
-		expect(typeof InsertPathSettingTab).toBe("function");
+		expect(typeof PathPickerSettingTab).toBe("function");
 	});
 
 	it("loads the root switcher class", () => {
@@ -17,6 +17,6 @@ describe("ui module imports", () => {
 	});
 
 	it("loads the picker modal class", () => {
-		expect(typeof InsertPathModal).toBe("function");
+		expect(typeof PathPickerModal).toBe("function");
 	});
 });

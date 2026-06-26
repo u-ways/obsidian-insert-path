@@ -48,7 +48,7 @@ async function collect(start: string, o: Opts = {}) {
 }
 
 beforeEach(async () => {
-	root = await fsp.mkdtemp(path.join(os.tmpdir(), "ip-walk-"));
+	root = await fsp.mkdtemp(path.join(os.tmpdir(), "pp-walk-"));
 	await mk("a/a1.txt");
 	await mk("a/a2.txt");
 	await mk("a/.hiddenfile");

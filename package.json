@@ -1,5 +1,5 @@
 {
-	"name": "obsidian-insert-path",
+	"name": "obsidian-path-picker",
 	"version": "0.3.0",
 	"description": "Fuzzy-find any file or directory under a root and insert its path at the cursor.",
 	"main": "main.js",

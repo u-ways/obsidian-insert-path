@@ -27,7 +27,7 @@ export class RootSwitcher extends Modal {
 	onOpen(): void {
 		const { contentEl } = this;
 		contentEl.empty();
-		contentEl.addClass("ip-root-switcher");
+		contentEl.addClass("pp-root-switcher");
 		this.titleEl.setText("Change search root");
 
 		const choose = (root: string): void => {
@@ -35,9 +35,9 @@ export class RootSwitcher extends Modal {
 			this.onChoose(root);
 		};
 
-		const list = contentEl.createDiv({ cls: "ip-root-list" });
+		const list = contentEl.createDiv({ cls: "pp-root-list" });
 		const addChoice = (label: string, value: string): void => {
-			const item = list.createEl("button", { cls: "ip-root-choice", text: label });
+			const item = list.createEl("button", { cls: "pp-root-choice", text: label });
 			item.addEventListener("click", () => choose(value));
 		};
 

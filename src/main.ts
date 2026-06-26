@@ -1,27 +1,27 @@
 import { Plugin } from "obsidian";
 import type { Editor } from "obsidian";
-import { DEFAULT_SETTINGS, type InsertPathSettings, type WalkMode } from "./types";
+import { DEFAULT_SETTINGS, type PathPickerSettings, type WalkMode } from "./types";
 import { buildInsertion } from "./core/insert";
-import { InsertPathModal } from "./ui/InsertPathModal";
-import { InsertPathSettingTab } from "./ui/settings";
+import { PathPickerModal } from "./ui/PathPickerModal";
+import { PathPickerSettingTab } from "./ui/settings";
 
-export default class InsertPathPlugin extends Plugin {
-	settings: InsertPathSettings = { ...DEFAULT_SETTINGS };
+export default class PathPickerPlugin extends Plugin {
+	settings: PathPickerSettings = { ...DEFAULT_SETTINGS };
 
 	onload(): void {
 		this.addCommand({
-			id: "insert-directory-path",
+			id: "directory-path",
 			name: "Insert directory path",
 			editorCallback: (editor) => this.openPicker(editor, "dir"),
 		});
 
 		this.addCommand({
-			id: "insert-file-path",
+			id: "file-path",
 			name: "Insert file path",
 			editorCallback: (editor) => this.openPicker(editor, "file"),
 		});
 
-		this.addSettingTab(new InsertPathSettingTab(this.app, this));
+		this.addSettingTab(new PathPickerSettingTab(this.app, this));
 
 		// Keep onload synchronous so it stays out of Obsidian's startup await-chain:
 		// read the (tiny) saved settings once the workspace is ready rather than fetching
@@ -32,7 +32,7 @@ export default class InsertPathPlugin extends Plugin {
 	}
 
 	private openPicker(editor: Editor, mode: WalkMode): void {
-		new InsertPathModal(this.app, this, mode, (abs, rel) => {
+		new PathPickerModal(this.app, this, mode, (abs, rel) => {
 			const text = buildInsertion(this.settings.insertionTemplate, { abs, rel });
 			editor.replaceSelection(text);
 			editor.focus();
@@ -40,7 +40,7 @@ export default class InsertPathPlugin extends Plugin {
 	}
 
 	async loadSettings(): Promise<void> {
-		const stored = (await this.loadData()) as Partial<InsertPathSettings> | null;
+		const stored = (await this.loadData()) as Partial<PathPickerSettings> | null;
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, stored ?? {});
 	}
 

@@ -14,7 +14,7 @@ async function write(rel: string, content = "") {
 }
 
 beforeEach(async () => {
-	tmp = await fsp.mkdtemp(path.join(os.tmpdir(), "ip-preview-"));
+	tmp = await fsp.mkdtemp(path.join(os.tmpdir(), "pp-preview-"));
 });
 
 afterEach(async () => {

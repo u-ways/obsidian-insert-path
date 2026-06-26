@@ -43,14 +43,14 @@ lets the test stub work — see below).
     ```
 
     This links `manifest.json`, `main.js`, and `styles.css` into
-    `<vault>/.obsidian/plugins/insert-path/` and writes an empty `.hotreload`
-    marker. The plugin **id (`insert-path`) must match that folder name.**
+    `<vault>/.obsidian/plugins/path-picker/` and writes an empty `.hotreload`
+    marker. The plugin **id (`path-picker`) must match that folder name.**
 
 3. Install **[Hot Reload](https://github.com/pjeby/hot-reload)** in the vault
    (it isn't a default plugin). With the `.hotreload` marker present, it reloads
-   Insert Path automatically on every `npm run dev` rebuild.
+   Path Picker automatically on every `npm run dev` rebuild.
 
-4. In Obsidian, enable **Insert Path** (and **Hot Reload**) under
+4. In Obsidian, enable **Path Picker** (and **Hot Reload**) under
    **Settings → Community plugins**. The first enable is manual; after that, Hot
    Reload handles it.
 

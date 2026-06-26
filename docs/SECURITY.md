@@ -4,7 +4,7 @@
 
 **Please do _not_ open a public GitHub issue for security vulnerabilities.**
 
-Report them privately via GitHub's **[Report a vulnerability](https://github.com/u-ways/obsidian-insert-path/security/advisories/new)**
+Report them privately via GitHub's **[Report a vulnerability](https://github.com/u-ways/obsidian-path-picker/security/advisories/new)**
 (repo → **Security** → **Advisories** → _Report a vulnerability_), which opens a private
 advisory visible only to the maintainers. If that's unavailable, contact the maintainer
 privately via their GitHub profile ([@u-ways](https://github.com/u-ways)).

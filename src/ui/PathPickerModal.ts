@@ -10,14 +10,14 @@ import { buildDirTree, previewFile, type DirTreeLine } from "../core/preview";
 import { getPrism, prismLangFor, shouldHighlight } from "../core/prism";
 import { addRecentRoot } from "../core/recent";
 import { clampSplitRatio, parseSkip, SPLIT_DEFAULT, type WalkMode } from "../types";
-import type InsertPathPlugin from "../main";
+import type PathPickerPlugin from "../main";
 import { RootSwitcher } from "./RootSwitcher";
 
 const SEARCH_DEBOUNCE_MS = 60;
 const PREVIEW_DEBOUNCE_MS = 60;
 const STREAM_THROTTLE_MS = 100;
 const RESULT_LIMIT = 200;
-/** Number of theme colours the rainbow tree cycles through (see the .ip-tree-d* CSS classes). */
+/** Number of theme colours the rainbow tree cycles through (see the .pp-tree-d* CSS classes). */
 const TREE_DEPTH_COLORS = 8;
 
 /**
@@ -25,8 +25,8 @@ const TREE_DEPTH_COLORS = 8;
  * a side preview pane, a root bar, and a footer. Streams a directory walk into
  * the matcher and inserts the chosen absolute path via `onChoose`.
  */
-export class InsertPathModal extends Modal {
-	private readonly plugin: InsertPathPlugin;
+export class PathPickerModal extends Modal {
+	private readonly plugin: PathPickerPlugin;
 	private readonly onChoose: (abs: string, rel: string) => void;
 
 	private mode: WalkMode;
@@ -61,7 +61,7 @@ export class InsertPathModal extends Modal {
 
 	constructor(
 		app: App,
-		plugin: InsertPathPlugin,
+		plugin: PathPickerPlugin,
 		mode: WalkMode,
 		onChoose: (abs: string, rel: string) => void,
 	) {
@@ -73,7 +73,7 @@ export class InsertPathModal extends Modal {
 	}
 
 	onOpen(): void {
-		this.modalEl.addClass("ip-modal");
+		this.modalEl.addClass("pp-modal");
 		this.buildDom();
 		this.registerKeys();
 		this.searchEl.focus();
@@ -89,28 +89,28 @@ export class InsertPathModal extends Modal {
 		window.clearTimeout(this.previewTimer);
 		window.clearTimeout(this.streamTimer);
 		this.contentEl.empty();
-		this.modalEl.removeClass("ip-modal");
+		this.modalEl.removeClass("pp-modal");
 	}
 
 	private buildDom(): void {
 		const { contentEl } = this;
 		contentEl.empty();
 
-		this.rootBarEl = contentEl.createDiv({ cls: "ip-root-bar" });
-		this.modeEl = this.rootBarEl.createSpan({ cls: "ip-mode" });
-		this.rootPathEl = this.rootBarEl.createSpan({ cls: "ip-root-path" });
+		this.rootBarEl = contentEl.createDiv({ cls: "pp-root-bar" });
+		this.modeEl = this.rootBarEl.createSpan({ cls: "pp-mode" });
+		this.rootPathEl = this.rootBarEl.createSpan({ cls: "pp-root-path" });
 
 		this.searchEl = contentEl.createEl("input", {
-			cls: "ip-search",
+			cls: "pp-search",
 			type: "text",
 		});
 		this.searchEl.addEventListener("input", () => this.onQueryChange());
 
-		this.bodyEl = contentEl.createDiv({ cls: "ip-body" });
-		this.resultsEl = this.bodyEl.createDiv({ cls: "ip-results" });
-		this.dividerEl = this.bodyEl.createDiv({ cls: "ip-divider" });
+		this.bodyEl = contentEl.createDiv({ cls: "pp-body" });
+		this.resultsEl = this.bodyEl.createDiv({ cls: "pp-results" });
+		this.dividerEl = this.bodyEl.createDiv({ cls: "pp-divider" });
 		this.dividerEl.setAttribute("aria-label", "Drag to resize · double-click to reset");
-		this.previewEl = this.bodyEl.createDiv({ cls: "ip-preview" });
+		this.previewEl = this.bodyEl.createDiv({ cls: "pp-preview" });
 
 		this.applySplit(this.plugin.settings.splitRatio);
 		this.dividerEl.addEventListener("pointerdown", (e) => this.startDrag(e));
@@ -138,11 +138,11 @@ export class InsertPathModal extends Modal {
 			{ keys: ["Esc"], label: "(Close)" },
 		];
 
-		const footer = parent.createDiv({ cls: "ip-footer" });
+		const footer = parent.createDiv({ cls: "pp-footer" });
 		for (const hint of hints) {
-			const item = footer.createSpan({ cls: "ip-hint" });
-			for (const key of hint.keys) item.createEl("kbd", { cls: "ip-key", text: key });
-			item.createSpan({ cls: "ip-hint-label", text: hint.label });
+			const item = footer.createSpan({ cls: "pp-hint" });
+			for (const key of hint.keys) item.createEl("kbd", { cls: "pp-key", text: key });
+			item.createSpan({ cls: "pp-hint-label", text: hint.label });
 		}
 	}
 
@@ -163,7 +163,7 @@ export class InsertPathModal extends Modal {
 	/** Drag the divider: live-resize while held, then persist the ratio on release. */
 	private startDrag(e: PointerEvent): void {
 		e.preventDefault();
-		this.modalEl.addClass("ip-dragging");
+		this.modalEl.addClass("pp-dragging");
 		let ratio = this.plugin.settings.splitRatio;
 
 		const onMove = (ev: PointerEvent) => {
@@ -180,7 +180,7 @@ export class InsertPathModal extends Modal {
 		this.dragCleanup = () => {
 			document.removeEventListener("pointermove", onMove);
 			document.removeEventListener("pointerup", onUp);
-			this.modalEl.removeClass("ip-dragging");
+			this.modalEl.removeClass("pp-dragging");
 		};
 		document.addEventListener("pointermove", onMove);
 		document.addEventListener("pointerup", onUp);
@@ -266,13 +266,13 @@ export class InsertPathModal extends Modal {
 			if (next.value.truncated && !this.truncatedNotified) {
 				this.truncatedNotified = true;
 				new Notice(
-					`Insert Path: results capped at ${settings.maxResults}. Narrow your search or raise the cap in settings.`,
+					`Path Picker: results capped at ${settings.maxResults}. Narrow your search or raise the cap in settings.`,
 				);
 			}
 			await this.refreshResults();
 		} catch {
 			if (!controller.signal.aborted) {
-				new Notice(`Insert Path: cannot read ${this.root}`);
+				new Notice(`Path Picker: cannot read ${this.root}`);
 			}
 		}
 	}
@@ -298,14 +298,14 @@ export class InsertPathModal extends Modal {
 
 		if (this.results.length === 0) {
 			this.resultsEl.createDiv({
-				cls: "ip-empty",
+				cls: "pp-empty",
 				text: this.candidates.length > 0 ? "No matches" : "Walking…",
 			});
 			return;
 		}
 
 		this.results.forEach((match, index) => {
-			const row = this.resultsEl.createDiv({ cls: "ip-row" });
+			const row = this.resultsEl.createDiv({ cls: "pp-row" });
 			if (index === this.selectedIndex) row.addClass("is-selected");
 			this.renderHighlighted(row, match.rel, match.positions);
 			row.addEventListener("click", (evt) => {
@@ -324,7 +324,7 @@ export class InsertPathModal extends Modal {
 			let j = i;
 			while (j < text.length && positions.has(j) === matched) j++;
 			const segment = text.slice(i, j);
-			container.createSpan({ cls: matched ? "ip-match" : "", text: segment });
+			container.createSpan({ cls: matched ? "pp-match" : "", text: segment });
 			i = j;
 		}
 	}
@@ -369,7 +369,7 @@ export class InsertPathModal extends Modal {
 			});
 			if (token !== this.previewToken) return; // a newer selection won
 			this.previewEl.empty();
-			const pre = this.previewEl.createEl("pre", { cls: "ip-tree" });
+			const pre = this.previewEl.createEl("pre", { cls: "pp-tree" });
 			if (this.plugin.settings.colorizeTree) {
 				this.renderColoredTree(pre, lines);
 			} else {
@@ -386,7 +386,7 @@ export class InsertPathModal extends Modal {
 		const code = pre.createEl("code");
 		code.setText(file.text); // textContent only — file content is never parsed as markup
 		// The truncation marker is its own node so Prism never tokenizes/recolors it.
-		if (file.truncated) pre.createEl("span", { cls: "ip-truncated", text: "\n…" });
+		if (file.truncated) pre.createEl("span", { cls: "pp-truncated", text: "\n…" });
 
 		// shouldHighlight() rejects binary/unreadable previews BEFORE we derive a
 		// language or touch Prism — the boundary that keeps binary content out of the
@@ -413,17 +413,17 @@ export class InsertPathModal extends Modal {
 
 	/**
 	 * Render the directory tree as one span per row, coloured by nesting depth
-	 * (cycling the theme's --color-* palette via the .ip-tree-d* classes), with
+	 * (cycling the theme's --color-* palette via the .pp-tree-d* classes), with
 	 * directories bold and placeholder rows muted. Each span carries its own
 	 * newline so the <pre> keeps the tree's layout.
 	 */
 	private renderColoredTree(pre: HTMLElement, lines: DirTreeLine[]): void {
 		lines.forEach((line, i) => {
-			const cls = ["ip-tree-line"];
+			const cls = ["pp-tree-line"];
 			if (line.muted) {
-				cls.push("ip-tree-muted");
+				cls.push("pp-tree-muted");
 			} else {
-				cls.push(`ip-tree-d${line.depth % TREE_DEPTH_COLORS}`);
+				cls.push(`pp-tree-d${line.depth % TREE_DEPTH_COLORS}`);
 				if (line.isDir) cls.push("is-dir");
 			}
 			pre.createSpan({ cls, text: (i > 0 ? "\n" : "") + line.text });
@@ -466,7 +466,7 @@ export class InsertPathModal extends Modal {
 				this.app.workspace
 					.getLeaf("tab")
 					.openFile(entry)
-					.catch(() => new Notice(`Insert Path: cannot open ${abs}`));
+					.catch(() => new Notice(`Path Picker: cannot open ${abs}`));
 				return false;
 			}
 			if (entry instanceof TFolder && this.revealFolder(entry)) {
@@ -508,9 +508,9 @@ export class InsertPathModal extends Modal {
 	private async openExternally(abs: string): Promise<void> {
 		try {
 			const error = await shell.openPath(abs);
-			if (error) new Notice(`Insert Path: cannot open ${abs}`);
+			if (error) new Notice(`Path Picker: cannot open ${abs}`);
 		} catch {
-			new Notice(`Insert Path: cannot open ${abs}`);
+			new Notice(`Path Picker: cannot open ${abs}`);
 		}
 	}
 
@@ -547,7 +547,7 @@ export class InsertPathModal extends Modal {
 			const info = await stat(trimmed);
 			if (!info.isDirectory()) throw new Error("not a directory");
 		} catch {
-			new Notice(`Insert Path: not a directory: ${trimmed}`);
+			new Notice(`Path Picker: not a directory: ${trimmed}`);
 			return;
 		}
 		this.root = trimmed;

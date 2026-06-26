@@ -31,7 +31,7 @@ export interface WalkResult {
 	truncated: boolean;
 }
 
-export interface InsertPathSettings {
+export interface PathPickerSettings {
 	/** Root the picker starts from (default: the user's home directory). */
 	defaultRoot: string;
 	/** Template for the inserted text. Tokens: {path}, {name}, {rel}. */
@@ -65,7 +65,7 @@ export interface InsertPathSettings {
 /** How many recent roots to remember. */
 export const RECENT_ROOTS_LIMIT = 5;
 
-export const DEFAULT_SETTINGS: InsertPathSettings = {
+export const DEFAULT_SETTINGS: PathPickerSettings = {
 	defaultRoot: os.homedir(),
 	insertionTemplate: "{path}",
 	recentRoots: [],

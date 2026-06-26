@@ -1,12 +1,12 @@
 import { PluginSettingTab, Setting } from "obsidian";
 import type { App } from "obsidian";
-import type InsertPathPlugin from "../main";
+import type PathPickerPlugin from "../main";
 import { validateSkip } from "../types";
 
-export class InsertPathSettingTab extends PluginSettingTab {
-	private readonly plugin: InsertPathPlugin;
+export class PathPickerSettingTab extends PluginSettingTab {
+	private readonly plugin: PathPickerPlugin;
 
-	constructor(app: App, plugin: InsertPathPlugin) {
+	constructor(app: App, plugin: PathPickerPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -141,10 +141,10 @@ export class InsertPathSettingTab extends PluginSettingTab {
 			.setDesc(
 				"Comma-separated directory names pruned while walking. Drag the box's bottom edge to resize it.",
 			)
-			.setClass("ip-skip-setting")
+			.setClass("pp-skip-setting")
 			.addTextArea((text) => {
 				text.inputEl.rows = 6;
-				const warningEl = text.inputEl.parentElement?.createDiv({ cls: "ip-skip-warning" });
+				const warningEl = text.inputEl.parentElement?.createDiv({ cls: "pp-skip-warning" });
 				const refresh = (value: string): void => {
 					if (warningEl) this.renderSkipIssues(warningEl, value);
 				};
@@ -167,7 +167,7 @@ export class InsertPathSettingTab extends PluginSettingTab {
 					: issue.kind === "whitespace"
 						? `"${issue.entry}" has a space — did you forget a comma? It is treated as one directory name.`
 						: `"${issue.entry}" has a path separator — only directory names are matched, so it won't match anything.`;
-			el.createDiv({ cls: "ip-skip-warning-line", text: message });
+			el.createDiv({ cls: "pp-skip-warning-line", text: message });
 		}
 	}
 }

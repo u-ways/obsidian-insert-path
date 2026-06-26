@@ -1,15 +1,15 @@
-# Insert Path (Plugin)
+# Path Picker (Plugin)
 
 <p align="center">
   <a href="https://obsidian.md/"><img src="https://img.shields.io/badge/Obsidian-%23483699?logo=obsidian&logoColor=white" alt="Obsidian"></a>&nbsp;
-  <a href="https://github.com/u-ways/obsidian-insert-path/releases/latest"><img src="https://img.shields.io/github/v/release/u-ways/obsidian-insert-path?sort=semver&label=release" alt="Release"></a>&nbsp;
-  <a href="https://github.com/u-ways/obsidian-insert-path/actions/workflows/ci.yml"><img src="https://github.com/u-ways/obsidian-insert-path/actions/workflows/ci.yml/badge.svg" alt="CI"></a>&nbsp;
-  <a href="https://github.com/u-ways/obsidian-insert-path/actions/workflows/security.yml"><img src="https://github.com/u-ways/obsidian-insert-path/actions/workflows/security.yml/badge.svg" alt="Security"></a>&nbsp;
-  <a href="LICENSE"><img alt="GitHub License" src="https://img.shields.io/github/license/u-ways/obsidian-insert-path?color=blue"></a>
+  <a href="https://github.com/u-ways/obsidian-path-picker/releases/latest"><img src="https://img.shields.io/github/v/release/u-ways/obsidian-path-picker?sort=semver&label=release" alt="Release"></a>&nbsp;
+  <a href="https://github.com/u-ways/obsidian-path-picker/actions/workflows/ci.yml"><img src="https://github.com/u-ways/obsidian-path-picker/actions/workflows/ci.yml/badge.svg" alt="CI"></a>&nbsp;
+  <a href="https://github.com/u-ways/obsidian-path-picker/actions/workflows/security.yml"><img src="https://github.com/u-ways/obsidian-path-picker/actions/workflows/security.yml/badge.svg" alt="Security"></a>&nbsp;
+  <a href="LICENSE"><img alt="GitHub License" src="https://img.shields.io/github/license/u-ways/obsidian-path-picker?color=blue"></a>
 </p>
 
 <p align="center">
-  <img src="docs/quick-demo.gif" alt="Insert Path demo" />
+  <img src="docs/quick-demo.gif" alt="Path Picker demo" />
 </p>
 
 Fuzzy-find any file or directory anywhere under a root (default: your home
@@ -25,7 +25,7 @@ For me, dropping a real filesystem path into a note normally means:
 4. Switch back,
 5. Paste.
 
-Insert Path does the fuzzy-find in a modal and inserts the result where your cursor already is, a seamless user experience.
+Path Picker does the fuzzy-find in a modal and inserts the result where your cursor already is, a seamless user experience.
 It brings the muscle memory of shell fuzzy finders into the editor, without leaving Obsidian.
 
 ## Features
@@ -49,7 +49,7 @@ Walking and previews use Node's `fs`; fuzzy matching uses [fzf-for-js](https://g
 ## Usage
 
 1. Place your cursor in a note.
-2. Run **Insert Path: Insert directory path** (or **…file path**) from the
+2. Run **Path Picker: Insert directory path** (or **…file path**) from the
    command palette, or bind a hotkey under **Settings → Hotkeys**. (If you use
    the [Doubleshift](https://github.com/Qwyntex/doubleshift) plugin, you can map
    shift-shift to either command.)
