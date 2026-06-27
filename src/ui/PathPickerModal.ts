@@ -166,6 +166,11 @@ export class PathPickerModal extends Modal {
 		this.modalEl.addClass("pp-dragging");
 		let ratio = this.plugin.settings.splitRatio;
 
+		// Capture the active document once so the move/up listeners are added to and
+		// removed from the same window — using `activeDocument` (not the global
+		// `document`) keeps the drag working when the modal is in a popout window.
+		const doc = activeDocument;
+
 		const onMove = (ev: PointerEvent) => {
 			const rect = this.bodyEl.getBoundingClientRect();
 			if (rect.width === 0) return;
@@ -178,12 +183,12 @@ export class PathPickerModal extends Modal {
 		};
 
 		this.dragCleanup = () => {
-			document.removeEventListener("pointermove", onMove);
-			document.removeEventListener("pointerup", onUp);
+			doc.removeEventListener("pointermove", onMove);
+			doc.removeEventListener("pointerup", onUp);
 			this.modalEl.removeClass("pp-dragging");
 		};
-		document.addEventListener("pointermove", onMove);
-		document.addEventListener("pointerup", onUp);
+		doc.addEventListener("pointermove", onMove);
+		doc.addEventListener("pointerup", onUp);
 	}
 
 	private endDrag(): void {
