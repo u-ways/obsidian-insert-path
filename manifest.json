@@ -1,7 +1,7 @@
 {
 	"id": "path-picker",
 	"name": "Path Picker",
-	"version": "0.3.0",
+	"version": "1.0.0",
 	"minAppVersion": "1.4.0",
 	"description": "Fuzzy-find any file or directory under a root, then insert its path at the cursor or open it.",
 	"author": "u-ways",
