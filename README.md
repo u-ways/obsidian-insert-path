@@ -31,7 +31,7 @@ It brings the muscle memory of shell fuzzy finders into the editor, without leav
 
 ## Features
 
-- **Two commands**: _Insert directory path_ and _Insert file path_. (+ a `Tab` toggle to switch mode inside the picker)
+- **Two commands**: _Directory path_ and _File path_. (+ a `Tab` toggle to switch mode inside the picker)
 - **Live fuzzy match** with highlighted match positions and a moving selection.
 - **Preview pane**: a directory tree (depth configurable, default 2), or the head
   of a file with syntax highlighting (using Obsidian's own renderer, so it matches
@@ -50,7 +50,7 @@ Walking and previews use Node's `fs`; fuzzy matching uses [fzf-for-js](https://g
 ## Usage
 
 1. Place your cursor in a note.
-2. Run **Path Picker: Insert directory path** (or **…file path**) from the
+2. Run **Path Picker: Directory path** (or **File path**) from the
    command palette, or bind a hotkey under **Settings → Hotkeys**. (If you use
    the [Doubleshift](https://github.com/Qwyntex/doubleshift) plugin, you can map
    shift-shift to either command.)
@@ -74,12 +74,18 @@ the vault, or an untracked in-vault path such as one under a dot-folder (e.g.
 `.obsidian/`) — opens in your operating system's default application for that file
 type (a directory opens in your file manager).
 
+**Swapping insert / open** — by default `Enter` and click insert the path, while
+`Alt+Enter` / `Alt+click` open the entry. Set **Primary action** to _Open entry_ in the
+plugin settings to flip this, so `Enter` / click open the entry and `Alt` inserts the
+path instead. The picker's footer key hints update to match whichever action is primary.
+
 ## Settings
 
 | Setting                 | Default           | Notes                                                                                                                                                                                                                                  |
 | ----------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Default root            | your home folder  | Where the picker starts.                                                                                                                                                                                                               |
 | Insertion template      | `{path}`          | Tokens: `{path}` (absolute), `{name}` (basename), `{rel}` (relative).                                                                                                                                                                  |
+| Primary action          | Insert path       | What `Enter` / click do on the selected entry; the modifier (`Alt+Enter` / `Alt+click`) runs the other. Set to **Open entry** to open on `Enter`/click and insert with `Alt`. The footer key hints follow this.                        |
 | Directory tree depth    | `2`               | How many levels deep the directory preview tree descends.                                                                                                                                                                              |
 | Colorize directory tree | on                | Rainbow-colour the tree preview by nesting depth using your theme's palette.                                                                                                                                                           |
 | Follow symlinks         | on                | Symlink cycles are handled safely.                                                                                                                                                                                                     |

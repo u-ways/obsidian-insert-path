@@ -9,7 +9,14 @@ import { locateInVault } from "../core/open";
 import { buildDirTree, previewFile, type DirTreeLine } from "../core/preview";
 import { getPrism, prismLangFor, shouldHighlight } from "../core/prism";
 import { addRecentRoot } from "../core/recent";
-import { clampSplitRatio, parseSkip, SPLIT_DEFAULT, type WalkMode } from "../types";
+import {
+	clampSplitRatio,
+	parseSkip,
+	resolveAction,
+	SPLIT_DEFAULT,
+	type PrimaryAction,
+	type WalkMode,
+} from "../types";
 import type PathPickerPlugin from "../main";
 import { RootSwitcher } from "./RootSwitcher";
 
@@ -129,10 +136,15 @@ export class PathPickerModal extends Modal {
 	 */
 	private buildFooter(parent: HTMLElement): void {
 		const mod = Platform.isMacOS ? "Cmd" : "Ctrl";
+		// Enter / Alt+Enter labels follow the "Primary action" setting so the hints
+		// always match what the keys actually do (resolveAction is the single source).
+		const primary = this.plugin.settings.primaryAction;
+		const labelFor = (action: PrimaryAction): string =>
+			action === "open" ? "(Open)" : "(Insert)";
 		const hints: ReadonlyArray<{ keys: readonly string[]; label: string }> = [
 			{ keys: ["↑", "↓"], label: "(Move)" },
-			{ keys: ["Enter"], label: "(Insert)" },
-			{ keys: ["Alt+Enter"], label: "(Open)" },
+			{ keys: ["Enter"], label: labelFor(resolveAction(primary, false)) },
+			{ keys: ["Alt+Enter"], label: labelFor(resolveAction(primary, true)) },
 			{ keys: ["Tab"], label: "(Dir / File)" },
 			{ keys: [`${mod}+O`], label: "(Change root)" },
 			{ keys: ["Esc"], label: "(Close)" },
@@ -201,8 +213,8 @@ export class PathPickerModal extends Modal {
 		this.scope.register([], "ArrowUp", () => this.move(-1));
 		this.scope.register(["Ctrl"], "n", () => this.move(1));
 		this.scope.register(["Ctrl"], "p", () => this.move(-1));
-		this.scope.register([], "Enter", () => this.choose());
-		this.scope.register(["Alt"], "Enter", () => this.openSelected());
+		this.scope.register([], "Enter", () => this.activate(false));
+		this.scope.register(["Alt"], "Enter", () => this.activate(true));
 		this.scope.register([], "Tab", () => this.toggleMode());
 		this.scope.register(["Mod"], "o", () => this.openRootSwitcher());
 	}
@@ -315,8 +327,7 @@ export class PathPickerModal extends Modal {
 			this.renderHighlighted(row, match.rel, match.positions);
 			row.addEventListener("click", (evt) => {
 				this.selectedIndex = index;
-				if (evt.altKey) this.openSelected();
-				else this.choose();
+				this.activate(evt.altKey);
 			});
 			this.rowEls.push(row);
 		});
@@ -433,6 +444,17 @@ export class PathPickerModal extends Modal {
 			}
 			pre.createSpan({ cls, text: (i > 0 ? "\n" : "") + line.text });
 		});
+	}
+
+	/**
+	 * Run the action a no-modifier (`withModifier=false`) or Alt (`true`) trigger maps
+	 * to: the configured primary action, or its inverse when Alt is held. Both `choose`
+	 * and `openSelected` return `false`, so this does too (marking the key handled).
+	 */
+	private activate(withModifier: boolean): false {
+		return resolveAction(this.plugin.settings.primaryAction, withModifier) === "open"
+			? this.openSelected()
+			: this.choose();
 	}
 
 	private choose(): false {

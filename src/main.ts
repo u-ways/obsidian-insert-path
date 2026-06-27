@@ -11,13 +11,13 @@ export default class PathPickerPlugin extends Plugin {
 	onload(): void {
 		this.addCommand({
 			id: "directory-path",
-			name: "Insert directory path",
+			name: "Directory path",
 			editorCallback: (editor) => this.openPicker(editor, "dir"),
 		});
 
 		this.addCommand({
 			id: "file-path",
-			name: "Insert file path",
+			name: "File path",
 			editorCallback: (editor) => this.openPicker(editor, "file"),
 		});
 

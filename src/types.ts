@@ -2,6 +2,9 @@ import * as os from "os";
 
 export type WalkMode = "dir" | "file";
 
+/** The two things the picker can do with the selected entry. */
+export type PrimaryAction = "insert" | "open";
+
 export interface WalkEntry {
 	/** Absolute path to the entry. */
 	abs: string;
@@ -36,6 +39,11 @@ export interface PathPickerSettings {
 	defaultRoot: string;
 	/** Template for the inserted text. Tokens: {path}, {name}, {rel}. */
 	insertionTemplate: string;
+	/**
+	 * Which action Enter / click trigger without a modifier; the modifier (Alt) always
+	 * runs the other. "insert" (default) inserts the path and Alt opens; "open" flips it.
+	 */
+	primaryAction: PrimaryAction;
 	/** Most-recently-used roots, most-recent first. */
 	recentRoots: string[];
 	/** Comma-separated directory names to prune during the walk. */
@@ -68,6 +76,7 @@ export const RECENT_ROOTS_LIMIT = 5;
 export const DEFAULT_SETTINGS: PathPickerSettings = {
 	defaultRoot: os.homedir(),
 	insertionTemplate: "{path}",
+	primaryAction: "insert",
 	recentRoots: [],
 	skip: ".git, .svn, .hg, .bzr, node_modules, bower_components, .next, .nuxt, .svelte-kit, .astro, .angular, .vite, .turbo, .parcel-cache, .docusaurus, .expo, .vercel, .netlify, .yarn, .pnpm-store, .output, __pycache__, .venv, venv, .mypy_cache, .pytest_cache, .ruff_cache, .tox, .nox, .eggs, .hypothesis, .ipynb_checkpoints, __pypackages__, .bundle, vendor, target, dist, build, out, obj, coverage, htmlcov, .nyc_output, _site, .jekyll-cache, Pods, DerivedData, Carthage, .dart_tool, .gradle, .terraform, .sass-cache, .serverless, .vagrant, __MACOSX, .idea, .vscode, .cache",
 	followSymlinks: true,
@@ -89,6 +98,15 @@ export const SPLIT_DEFAULT = 0.5;
 export function clampSplitRatio(ratio: number): number {
 	if (!Number.isFinite(ratio)) return SPLIT_DEFAULT;
 	return Math.min(SPLIT_MAX, Math.max(SPLIT_MIN, ratio));
+}
+
+/**
+ * Resolve which action a key or click triggers: the configured primary action when no
+ * modifier is held, or the other action when the modifier (Alt) is held.
+ */
+export function resolveAction(primary: PrimaryAction, withModifier: boolean): PrimaryAction {
+	if (!withModifier) return primary;
+	return primary === "insert" ? "open" : "insert";
 }
 
 /** Parse the comma-separated `skip` setting into a clean list of basenames. */

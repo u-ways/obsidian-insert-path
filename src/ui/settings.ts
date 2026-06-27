@@ -1,7 +1,7 @@
 import { PluginSettingTab, Setting } from "obsidian";
 import type { App } from "obsidian";
 import type PathPickerPlugin from "../main";
-import { validateSkip } from "../types";
+import { validateSkip, type PrimaryAction } from "../types";
 
 export class PathPickerSettingTab extends PluginSettingTab {
 	private readonly plugin: PathPickerPlugin;
@@ -37,6 +37,22 @@ export class PathPickerSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.insertionTemplate =
 							value.length > 0 ? value : "{path}";
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Primary action")
+			.setDesc(
+				"What Enter and click do on the selected entry. The modifier (Alt+Enter / Alt+click) always runs the other one.",
+			)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("insert", "Insert path")
+					.addOption("open", "Open entry")
+					.setValue(this.plugin.settings.primaryAction)
+					.onChange(async (value) => {
+						this.plugin.settings.primaryAction = value as PrimaryAction;
 						await this.plugin.saveSettings();
 					}),
 			);
