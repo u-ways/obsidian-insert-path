@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/quick-demo.gif" alt="Path Picker demo" />
+  <img src="docs/quick-demo.gif" alt="Path Picker demo" width="800" />
 </p>
 
 Fuzzy-find any file or directory anywhere under a root (default: your home
