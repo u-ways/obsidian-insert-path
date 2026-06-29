@@ -1,9 +1,15 @@
 import { Plugin } from "obsidian";
 import type { Editor } from "obsidian";
-import { DEFAULT_SETTINGS, type PathPickerSettings, type WalkMode } from "./types";
+import {
+	DEFAULT_SETTINGS,
+	resolveDefaultRoot,
+	type PathPickerSettings,
+	type WalkMode,
+} from "./types";
 import { buildInsertion } from "./core/insert";
 import { PathPickerModal } from "./ui/PathPickerModal";
 import { PathPickerSettingTab } from "./ui/settings";
+import { vaultBasePath } from "./ui/vault";
 
 export default class PathPickerPlugin extends Plugin {
 	settings: PathPickerSettings = { ...DEFAULT_SETTINGS };
@@ -42,6 +48,12 @@ export default class PathPickerPlugin extends Plugin {
 	async loadSettings(): Promise<void> {
 		const stored = (await this.loadData()) as Partial<PathPickerSettings> | null;
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, stored ?? {});
+		// On a fresh install (no root ever saved) start at the vault folder rather than
+		// the OS home dir — the natural place to fuzzy-find from inside an Obsidian vault.
+		// An explicit saved value (including an empty string) is always respected.
+		if (stored?.defaultRoot === undefined) {
+			this.settings.defaultRoot = resolveDefaultRoot(vaultBasePath(this.app));
+		}
 	}
 
 	async saveSettings(): Promise<void> {

@@ -109,6 +109,30 @@ export function resolveAction(primary: PrimaryAction, withModifier: boolean): Pr
 	return primary === "insert" ? "open" : "insert";
 }
 
+/**
+ * The root a fresh install starts from: the current vault folder when it's a local
+ * filesystem vault, or the user's home directory when no vault path is available.
+ */
+export function resolveDefaultRoot(vaultPath: string | null): string {
+	return vaultPath ?? os.homedir();
+}
+
+/**
+ * Footer label for the primary modifier (Obsidian's `Mod`) key, following the platform:
+ * the `⌘` glyph on macOS, the word `Ctrl` elsewhere.
+ */
+export function modKeyLabel(isMacOS: boolean): string {
+	return isMacOS ? "⌘" : "Ctrl";
+}
+
+/**
+ * Footer label for the Alt/Option modifier key, following the platform: the `⌥` glyph
+ * on macOS, the word `Alt` elsewhere.
+ */
+export function altKeyLabel(isMacOS: boolean): string {
+	return isMacOS ? "⌥" : "Alt";
+}
+
 /** Parse the comma-separated `skip` setting into a clean list of basenames. */
 export function parseSkip(skip: string): string[] {
 	return skip

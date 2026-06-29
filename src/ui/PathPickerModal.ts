@@ -1,4 +1,4 @@
-import { FileSystemAdapter, Modal, Notice, Platform, TFile, TFolder } from "obsidian";
+import { Modal, Notice, Platform, TFile, TFolder } from "obsidian";
 import type { App, TAbstractFile } from "obsidian";
 import { shell } from "electron";
 import { stat } from "../core/fs-read";
@@ -10,7 +10,9 @@ import { buildDirTree, previewFile, type DirTreeLine } from "../core/preview";
 import { getPrism, prismLangFor, shouldHighlight } from "../core/prism";
 import { addRecentRoot } from "../core/recent";
 import {
+	altKeyLabel,
 	clampSplitRatio,
+	modKeyLabel,
 	parseSkip,
 	resolveAction,
 	SPLIT_DEFAULT,
@@ -19,6 +21,7 @@ import {
 } from "../types";
 import type PathPickerPlugin from "../main";
 import { RootSwitcher } from "./RootSwitcher";
+import { vaultBasePath } from "./vault";
 
 const SEARCH_DEBOUNCE_MS = 60;
 const PREVIEW_DEBOUNCE_MS = 60;
@@ -131,11 +134,13 @@ export class PathPickerModal extends Modal {
 	/**
 	 * Build the footer hints: one key + action pair per shortcut, rendered as a
 	 * styled key chip next to its label so the keys stand out from the descriptions.
-	 * The root shortcut follows the platform (Cmd on macOS, Ctrl elsewhere) to match
-	 * the `Mod` binding registered in `registerKeys`.
+	 * Modifier labels follow the platform (the `⌘`/`⌥` glyphs on macOS, the words
+	 * `Ctrl`/`Alt` elsewhere); the root shortcut matches the `Mod` binding in
+	 * `registerKeys`.
 	 */
 	private buildFooter(parent: HTMLElement): void {
-		const mod = Platform.isMacOS ? "Cmd" : "Ctrl";
+		const mod = modKeyLabel(Platform.isMacOS);
+		const alt = altKeyLabel(Platform.isMacOS);
 		// Enter / Alt+Enter labels follow the "Primary action" setting so the hints
 		// always match what the keys actually do (resolveAction is the single source).
 		const primary = this.plugin.settings.primaryAction;
@@ -144,7 +149,7 @@ export class PathPickerModal extends Modal {
 		const hints: ReadonlyArray<{ keys: readonly string[]; label: string }> = [
 			{ keys: ["↑", "↓"], label: "(Move)" },
 			{ keys: ["Enter"], label: labelFor(resolveAction(primary, false)) },
-			{ keys: ["Alt+Enter"], label: labelFor(resolveAction(primary, true)) },
+			{ keys: [`${alt}+Enter`], label: labelFor(resolveAction(primary, true)) },
 			{ keys: ["Tab"], label: "(Dir / File)" },
 			{ keys: [`${mod}+O`], label: "(Change root)" },
 			{ keys: ["Esc"], label: "(Close)" },
@@ -481,7 +486,7 @@ export class PathPickerModal extends Modal {
 		const abs = this.entryMap.get(match.rel);
 		if (abs === undefined) return false;
 
-		const loc = locateInVault(abs, this.vaultBasePath());
+		const loc = locateInVault(abs, vaultBasePath(this.app));
 		this.close();
 
 		if (loc.inVault && loc.relativePath !== null) {
@@ -548,19 +553,13 @@ export class PathPickerModal extends Modal {
 		return false;
 	}
 
-	/** The vault's absolute base path, or null when it isn't a local-filesystem vault. */
-	private vaultBasePath(): string | null {
-		const adapter = this.app.vault.adapter;
-		return adapter instanceof FileSystemAdapter ? adapter.getBasePath() : null;
-	}
-
 	private openRootSwitcher(): false {
 		new RootSwitcher(
 			this.app,
 			{
 				currentRoot: this.root,
 				homeDir: os.homedir(),
-				vaultRoot: this.vaultBasePath(),
+				vaultRoot: vaultBasePath(this.app),
 				recents: this.plugin.settings.recentRoots,
 			},
 			(root) => void this.setRoot(root),

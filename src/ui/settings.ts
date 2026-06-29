@@ -17,7 +17,7 @@ export class PathPickerSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Default root")
-			.setDesc("Directory the picker starts from. Defaults to your home folder.")
+			.setDesc("Directory the picker starts from. Defaults to your vault folder.")
 			.addText((text) =>
 				text.setValue(this.plugin.settings.defaultRoot).onChange(async (value) => {
 					this.plugin.settings.defaultRoot = value.trim();

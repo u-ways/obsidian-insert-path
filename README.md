@@ -12,7 +12,7 @@
   <img src="docs/quick-demo.gif" alt="Path Picker demo" width="800" />
 </p>
 
-Fuzzy-find any file or directory anywhere under a root (default: your home
+Fuzzy-find any file or directory anywhere under a root (default: your vault
 folder) from inside Obsidian, preview it, and then **insert** its path at the
 cursor or **open** the entry — as a note in Obsidian, or in your OS's default app.
 
@@ -41,7 +41,7 @@ It brings the muscle memory of shell fuzzy finders into the editor, without leav
   to find your sweet spot; the position is remembered across sessions
   (double-click the divider to reset it to 50/50).
 - **Root switching** (`Ctrl/Cmd+O`): jump to home, the vault root, a recent root (the last 5 are remembered), or type/paste a custom path.
-- **Open in place** (`Alt+Enter` / `Alt+click`): open the selection instead of inserting it — in Obsidian when it's a tracked vault entry (note in a new tab, or folder revealed in the File Explorer), otherwise in your OS's default app.
+- **Open in place** (`Alt/Option+Enter` / `Alt/Option+click`): open the selection instead of inserting it — in Obsidian when it's a tracked vault entry (note in a new tab, or folder revealed in the File Explorer), otherwise in your OS's default app.
 - **Configurable insertion**: a template decides what gets inserted.
 
 On top of that, it has **no external dependencies**, no `fzf`, `eza`, `bat`, or `fd` binaries.
@@ -57,17 +57,17 @@ Walking and previews use Node's `fs`; fuzzy matching uses [fzf-for-js](https://g
 3. Type to filter; the preview updates as you move the selection.
 4. Press **Enter** to insert the path at the cursor.
 
-| Key                       | Action                          |
-| ------------------------- | ------------------------------- |
-| `↑` / `↓`                 | Move selection                  |
-| `Ctrl+N/P`                | Move selection (readline-style) |
-| `Enter`                   | Insert the selected path        |
-| `Alt+Enter` / `Alt+click` | Open the selected entry         |
-| `Tab`                     | Toggle directory / file mode    |
-| `Ctrl/Cmd+O`              | Change the search root          |
-| `Esc`                     | Close                           |
+| Key                                     | Action                          |
+| --------------------------------------- | ------------------------------- |
+| `↑` / `↓`                               | Move selection                  |
+| `Ctrl+N/P`                              | Move selection (readline-style) |
+| `Enter`                                 | Insert the selected path        |
+| `Alt/Option+Enter` / `Alt/Option+click` | Open the selected entry         |
+| `Tab`                                   | Toggle directory / file mode    |
+| `Ctrl/Cmd+O`                            | Change the search root          |
+| `Esc`                                   | Close                           |
 
-**Opening an entry** — `Alt+Enter` (or `Alt+click`) opens the selection instead of
+**Opening an entry** — `Alt/Option+Enter` (or `Alt/Option+click`) opens the selection instead of
 inserting it. A **tracked vault entry** opens in Obsidian: a file opens as a note in
 a new tab, a folder is revealed in the File Explorer sidebar. Anything else — outside
 the vault, or an untracked in-vault path such as one under a dot-folder (e.g.
@@ -75,17 +75,17 @@ the vault, or an untracked in-vault path such as one under a dot-folder (e.g.
 type (a directory opens in your file manager).
 
 **Swapping insert / open** — by default `Enter` and click insert the path, while
-`Alt+Enter` / `Alt+click` open the entry. Set **Primary action** to _Open entry_ in the
-plugin settings to flip this, so `Enter` / click open the entry and `Alt` inserts the
+`Alt/Option+Enter` / `Alt/Option+click` open the entry. Set **Primary action** to _Open entry_ in the
+plugin settings to flip this, so `Enter` / click open the entry and `Alt/Option` inserts the
 path instead. The picker's footer key hints update to match whichever action is primary.
 
 ## Settings
 
 | Setting                 | Default           | Notes                                                                                                                                                                                                                                  |
 | ----------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Default root            | your home folder  | Where the picker starts.                                                                                                                                                                                                               |
+| Default root            | your vault folder | Where the picker starts. On a fresh install this is your current vault's folder.                                                                                                                                                       |
 | Insertion template      | `{path}`          | Tokens: `{path}` (absolute), `{name}` (basename), `{rel}` (relative).                                                                                                                                                                  |
-| Primary action          | Insert path       | What `Enter` / click do on the selected entry; the modifier (`Alt+Enter` / `Alt+click`) runs the other. Set to **Open entry** to open on `Enter`/click and insert with `Alt`. The footer key hints follow this.                        |
+| Primary action          | Insert path       | What `Enter` / click do on the selected entry; the modifier (`Alt/Option+Enter` / `Alt/Option+click`) runs the other. Set to **Open entry** to open on `Enter`/click and insert with `Alt/Option`. The footer key hints follow this.   |
 | Directory tree depth    | `2`               | How many levels deep the directory preview tree descends.                                                                                                                                                                              |
 | Colorize directory tree | on                | Rainbow-colour the tree preview by nesting depth using your theme's palette.                                                                                                                                                           |
 | Follow symlinks         | on                | Symlink cycles are handled safely.                                                                                                                                                                                                     |
