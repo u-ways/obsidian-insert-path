@@ -44,7 +44,7 @@ jobs:
 
             # Step 1 — Claude composes the new body to a file. Read-only tools + Write:
             # it cannot publish, delete, create or re-tag a release.
-            - uses: anthropics/claude-code-action@74eedf1a1892082d619c3edb66b9402da6520e7f # v1.0.156
+            - uses: anthropics/claude-code-action@fad22eb3fa582b7357fc0ea48af6645851b884fd # v1.0.161
               with:
                   claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
                   # Use the workflow's own token directly so the action skips its OIDC
